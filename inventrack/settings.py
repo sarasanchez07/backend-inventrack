@@ -19,7 +19,7 @@ import sys
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Cargar variables de entorno
-load_dotenv()
+load_dotenv(BASE_DIR / '.env')
 
 # --------------------------------------------------
 # SEGURIDAD
@@ -61,22 +61,22 @@ INSTALLED_APPS = [
     "django_filters",
 
     # Apps locales (InvenTrack)
-    "apps.authentication",
-    "apps.personnel",
-    "apps.inventory",
-    "apps.categories",
-    "apps.products",
-    "apps.movements",
-    "apps.reports",
-    "apps.alerts",
-    "apps.dashboard",
+    #"apps.authentication",
+    #"apps.personnel",
+    #"apps.inventory",
+    #"apps.categories",
+    #"apps.products",
+    #"apps.movements",
+    #"apps.reports",
+    #"apps.alerts",
+    #"apps.dashboard",
 ]
 
 # --------------------------------------------------
 # USUARIO PERSONALIZADO
 # --------------------------------------------------
 
-AUTH_USER_MODEL = "authentication.User"
+#AUTH_USER_MODEL = "authentication.User"
 
 # --------------------------------------------------
 # MIDDLEWARE
