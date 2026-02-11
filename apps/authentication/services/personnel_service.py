@@ -12,7 +12,7 @@ class PersonnelService:
         password = data.pop('password')
         
         # Crear el usuario (el 'username' puede ser el email en tu modelo)
-        user = User.objects.create(**data, username=data.get('email'))
+        user = User.objects.create(**data)
         user.set_password(password)
         user.save()
 

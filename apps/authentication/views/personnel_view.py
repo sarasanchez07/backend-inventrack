@@ -1,12 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from authentication.serializers.personnel_serializer import PersonnelCreateSerializer
-from authentication.services.personnel_service import PersonnelService
-from authentication.permissions import IsAdminUser
+from apps.authentication.serializers.personnel_serializer import PersonnelCreateSerializer
+from apps.authentication.services.personnel_service import PersonnelService
+from apps.authentication.permissions import IsAdminUser
 
 class PersonnelCreateView(APIView):
-    permission_classes = [IsAdminUser] # Solo Nivel 1 puede acceder
+    permission_classes = [IsAdminUser]
+    serializer_class = PersonnelCreateSerializer # Solo Nivel 1 puede acceder
 
     def post(self, request):
         serializer = PersonnelCreateSerializer(data=request.data)

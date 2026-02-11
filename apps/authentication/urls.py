@@ -1,13 +1,16 @@
 from django.urls import path
-
-from authentication.views.login_view import LoginView
-from authentication.views.register_view import RegisterView
-from authentication.views.password_reset_view import PasswordResetView
-from .views.personnel_view import PersonnelCreateView
+from apps.authentication.views.login_view import LoginView
+from apps.authentication.views.personnel_view import PersonnelCreateView
+# Corrige estas importaciones:
+from apps.authentication.views.password_reset_view import (
+    PasswordResetRequestView, 
+    PasswordResetConfirmView
+)
 
 urlpatterns = [
-    path("login/", LoginView.as_view(), name="login"),
-    path("register/", RegisterView.as_view(), name="register"),
-    path("password-reset/", PasswordResetView.as_view(), name="password-reset"),
+    path('login/', LoginView.as_view(), name='login'),
+    # Cambia PasswordResetView por PasswordResetRequestView
+    path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
     path('personnel/create/', PersonnelCreateView.as_view(), name='personnel-create'),
+    path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
 ]

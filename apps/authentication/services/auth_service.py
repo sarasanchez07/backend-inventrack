@@ -2,6 +2,12 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
+from django.conf import settings
+
 User = get_user_model()
 
 
@@ -30,5 +36,19 @@ class AuthService:
         }
 
     @staticmethod
-    def register(data: dict) -> User:
-        return User.objects.create_user(**data)
+    def send_password_reset_email(email):
+        user = User.objects.filter(email=email).first()
+        if user:
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            # En un entorno real, aquí pondrías la URL de tu frontend
+            reset_url = f"http://localhost:3000/reset-password/{uid}/{token}/"
+            
+            send_mail(
+                'Recuperación de Contraseña - InvenTrack',
+                f'Haz clic en el siguiente enlace para restablecer tu clave: {reset_url}',
+                settings.EMAIL_HOST_USER,
+                [email],
+                fail_silently=False,
+            )
+        return True
