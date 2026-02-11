@@ -61,7 +61,7 @@ INSTALLED_APPS = [
     "django_filters",
 
     # Apps locales (InvenTrack)
-    #"apps.authentication",
+    "apps.authentication",
     #"apps.personnel",
     #"apps.inventory",
     #"apps.categories",
@@ -76,7 +76,7 @@ INSTALLED_APPS = [
 # USUARIO PERSONALIZADO
 # --------------------------------------------------
 
-#AUTH_USER_MODEL = "authentication.User"
+AUTH_USER_MODEL = "authentication.User"
 
 # --------------------------------------------------
 # MIDDLEWARE
