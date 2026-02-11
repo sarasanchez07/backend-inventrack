@@ -1,10 +1,12 @@
-from rest_framework.permissions import BasePermission
+from rest_framework import permissions
 
-
-class IsAdminUserCustom(BasePermission):
+class IsAdminUser(permissions.BasePermission):
     """
-    Permite acceso solo a usuarios administradores.
+    Permite acceso solo a usuarios con el rol 'admin'.
     """
-
     def has_permission(self, request, view):
-        return request.user and request.user.is_staff
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            getattr(request.user, 'role', None) == 'admin'
+        )

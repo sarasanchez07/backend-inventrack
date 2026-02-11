@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     # Apps locales (InvenTrack)
     "apps.authentication",
     #"apps.personnel",
-    #"apps.inventory",
+    "apps.inventory",
     #"apps.categories",
     #"apps.products",
     #"apps.movements",

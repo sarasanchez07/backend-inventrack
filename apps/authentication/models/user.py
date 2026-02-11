@@ -67,6 +67,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
+    ROLE_CHOICES = (
+        ('admin', 'Administrador'),
+        ('maestro', 'Maestro'),
+        ('jefe', 'Jefe'),
+        ('estudiante', 'Estudiante'),
+    )
+    role = models.CharField(max_length=15, choices=ROLE_CHOICES, default='estudiante')
+    
+    # Relación ManyToMany con la app de inventory
+    # (Asegúrate de que la app 'inventory' y el modelo 'Inventory' existan)
+    assigned_inventories = models.ManyToManyField('inventory.Inventory', blank=True, related_name='staff')
+
     class Meta:
         verbose_name = "Usuario"
         verbose_name_plural = "Usuarios"
