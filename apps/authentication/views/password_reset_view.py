@@ -4,16 +4,17 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 # AGREGA ESTA LÍNEA:
 from django.contrib.auth import get_user_model
-
+import logging
 from apps.authentication.serializers.password_reset_serializer import (
     PasswordResetRequestSerializer, 
     PasswordResetConfirmSerializer)
-
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
+from apps.authentication.services.auth_service import AuthService
 
 # DEFINE EL MODELO AQUÍ:
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class PasswordResetConfirmView(APIView):
@@ -35,7 +36,7 @@ class PasswordResetConfirmView(APIView):
                 return Response({"error": "Error al procesar la solicitud"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-from apps.authentication.services.auth_service import AuthService
+
 
 class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]

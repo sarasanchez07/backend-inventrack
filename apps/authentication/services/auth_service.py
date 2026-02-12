@@ -18,6 +18,19 @@ class AuthService:
 
     @staticmethod
     def login(email: str, password: str) -> dict:
+        """
+        Autentica un usuario y genera tokens JWT.
+    
+        Args:
+            email: Email del usuario
+            password: Contraseña del usuario
+            
+        Returns:
+            dict: Tokens y datos del usuario
+            
+        Raises:
+            ValueError: Si las credenciales son inválidas o el usuario está inactivo
+        """
         user = authenticate(email=email, password=password)
 
         if not user:
