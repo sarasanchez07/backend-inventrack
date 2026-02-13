@@ -14,7 +14,7 @@ class InventoryAdmin(admin.ModelAdmin):
 # Registro para Categorías
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'inventory', 'created_at')
+    list_display = ('name', 'inventory')
     list_filter = ('inventory',)
     search_fields = ('name',)
 

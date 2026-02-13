@@ -47,6 +47,7 @@ class Category(models.Model):
         on_delete=models.CASCADE, 
         related_name='categories' # Esto permite el acceso desde el inventario
     )
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         verbose_name_plural = "Categories"
@@ -56,21 +57,6 @@ class Category(models.Model):
     def __str__(self):
         return f"{self.name} - {self.inventory.name}"
     
-class Product(models.Model):
-    name = models.CharField(max_length=100)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
-    inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
-    
-    # Campos opcionales que se activan según el inventario
-    concentration = models.CharField(max_length=50, blank=True, null=True)
-    base_unit = models.ForeignKey(BaseUnit, on_delete=models.SET_NULL, null=True)
-    presentation = models.ForeignKey(Presentation, on_delete=models.SET_NULL, null=True)
-    expiration_date = models.DateField(blank=True, null=True)
-    
-    # Stock (siempre visible)
-    stock_min = models.IntegerField(default=0)
-    current_stock = models.IntegerField(default=0)
-
 class Product(models.Model):
     name = models.CharField(max_length=100)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
