@@ -10,18 +10,24 @@ class ProductListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # FILTRADO DINÁMICO
+        user = request.user
         inventory_id = request.query_params.get('inventory_id')
         search = request.query_params.get('search')
         
-        products = Product.objects.all()
+        # 1. Base de la consulta según el ROL
+        if user.role == 'admin':
+            # El Admin puede ver absolutamente todo
+            products = Product.objects.all()
+        else:
+            # El Personal SOLO ve productos de sus inventarios asignados
+            products = Product.objects.filter(inventory__in=user.assigned_inventories.all())
 
+        # 2. Filtros adicionales (opcionales)
         if inventory_id:
-            # Nivel 2: Solo productos de este inventario
+            # Si el personal asignado a varios inventarios quiere ver solo uno
             products = products.filter(inventory_id=inventory_id)
         
         if search:
-            # Búsqueda por nombre
             products = products.filter(name__icontains=search)
 
         serializer = ProductSerializer(products, many=True)
@@ -66,7 +72,15 @@ class ProductDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        """Para el botón 'Eliminar' de tu interfaz"""
         product = get_object_or_404(Product, pk=pk)
+        user = request.user
+
+        # Seguridad: Solo admin o personal asignado al inventario del producto
+        if user.role != 'admin' and not user.assigned_inventories.filter(id=product.inventory.id).exists():
+            return Response(
+                {"error": "No tienes permiso para eliminar este producto."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         product.delete()
         return Response({"message": "Producto eliminado"}, status=status.HTTP_204_NO_CONTENT)
