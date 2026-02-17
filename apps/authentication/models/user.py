@@ -80,6 +80,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     assigned_inventories = models.ManyToManyField('inventory.Inventory', blank=True, related_name='staff')
 
     class Meta:
+        app_label = 'authentication'
         verbose_name = "Usuario"
         verbose_name_plural = "Usuarios"
         ordering = ["email"]
