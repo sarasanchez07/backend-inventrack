@@ -10,6 +10,7 @@ urlpatterns = [
     # Asegúrate de que las rutas tengan el prefijo 'apps.'
     path('auth/', include('apps.authentication.urls')),
     path('inventory/', include('apps.inventory.urls')),
+    path('movements/', include('apps.movements.urls')),
 
     # Documentación Swagger
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

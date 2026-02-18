@@ -71,3 +71,8 @@ class Product(models.Model):
     # Stock (siempre visible)
     stock_min = models.IntegerField(default=0)
     current_stock = models.IntegerField(default=0)
+
+    def __str__(self):
+        # Esto permite que en el formulario de movimientos veas el nombre
+        unit = self.base_unit.name if self.base_unit else "Sin unidad"
+        return f"{self.name} ({unit})"
