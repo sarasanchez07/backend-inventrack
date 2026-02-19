@@ -3,6 +3,6 @@ from .views.movement_views import MovementCreateView, MovementDetailView, Moveme
 
 urlpatterns = [
     path('', MovementListView.as_view(), name='movement-list'),
-    path('movements/register/', MovementCreateView.as_view(), name='movement-register'),
-    path('movements/<int:pk>/', MovementDetailView.as_view(), name='movement-detail'),
+    path('register/', MovementCreateView.as_view(), name='movement-register'),
+    path('<int:pk>/', MovementDetailView.as_view(), name='movement-detail'),
 ]

@@ -92,6 +92,12 @@ class MovementDetailView(APIView):
             movement = Movement.objects.get(pk=pk)
         except Movement.DoesNotExist:
             return Response({"error": "Movimiento no encontrado."}, status=404)
+        
+        if request.user.role != 'admin' and movement.user != request.user:
+            return Response(
+                {"error": "No tienes permiso para ver este movimiento."},
+                status=403
+            )
 
         serializer = MovementSerializer(movement)
         return Response(serializer.data)
@@ -101,6 +107,11 @@ class MovementListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        movements = Movement.objects.all()
+
+        if request.user.role == 'admin':
+            movements = Movement.objects.all()
+        else:
+            movements = Movement.objects.filter(user=request.user)
+
         serializer = MovementSerializer(movements, many=True)
         return Response(serializer.data)
