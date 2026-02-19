@@ -21,6 +21,12 @@ class CategoryAdmin(admin.ModelAdmin):
 # Registro para Productos (el más detallado)
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'inventory', 'current_stock', 'expiration_date')
+    list_display = ('name', 'category', 'inventory', 'get_stock_display', 'expiration_date')
+    readonly_fields = ('current_stock',)
     list_filter = ('inventory', 'category')
     search_fields = ('name',)
+
+    def get_stock_display(self, obj):
+        return obj.get_stock_display()
+
+    get_stock_display.short_description = "Stock Actual"

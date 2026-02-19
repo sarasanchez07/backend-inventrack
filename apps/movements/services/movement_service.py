@@ -1,34 +1,68 @@
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
+from decimal import Decimal
+
+from apps.inventory.models import Product
+from apps.movements.models import Movement
+
 
 class MovementService:
+
     @staticmethod
     @transaction.atomic
     def register_movement(user, serializer):
-        # 1. Guardamos el movimiento pero no lo confirmamos en DB aún
-        movement = serializer.save(user=user)
-        product = movement.product
+
+        validated_data = serializer.validated_data
+
+        product = validated_data.get("product")
+        movement_type = validated_data.get("type")
+        quantity = validated_data.get("quantity")
+        unit_type = validated_data.get("unit_type", "BASE")
 
         if not product:
-            raise ValidationError("El producto no existe o fue eliminado.")
+            raise ValidationError("El producto no existe.")
 
-        # 2. Validaciones de Negocio
-        if movement.type == 'OUT':
-            if product.current_stock <= 0:
-                raise ValidationError("No se puede realizar la salida: El stock actual es 0.")
-            
-            if product.current_stock < movement.quantity:
-                raise ValidationError(f"Stock insuficiente. Solo hay {product.current_stock} unidades disponibles.")
-            
-            # Restamos del stock del producto
-            product.current_stock -= movement.quantity
-            
-        elif movement.type == 'IN':
-            # Sumamos al stock del producto
-            product.current_stock += movement.quantity
-        
-        # 3. Guardamos el cambio en el modelo Product
-        # Esto actualiza automáticamente lo que se ve en el apartado de Productos
-        product.save() 
-        
+        if quantity <= Decimal("0"):
+            raise ValidationError("La cantidad debe ser mayor que 0.")
+
+        # 🔒 Bloqueo para evitar concurrencia
+        product = Product.objects.select_for_update().get(pk=product.pk)
+
+        # 🔥 Convertir siempre a unidad base
+        real_quantity = product.convert_to_base_unit(
+            quantity,
+            is_presentation=(unit_type == "PRESENTATION")
+        )
+
+        # Validaciones de negocio
+        if movement_type == "OUT":
+
+            if product.current_stock < real_quantity:
+                raise ValidationError(
+                    f"Stock insuficiente. Solo hay {product.current_stock} unidades disponibles."
+                )
+
+            product.current_stock -= real_quantity
+
+        elif movement_type == "IN":
+
+            product.current_stock += real_quantity
+
+        else:
+            raise ValidationError("Tipo de movimiento inválido.")
+
+        product.save()
+
+        # Guardamos el movimiento exactamente como fue ingresado
+        movement = Movement.objects.create(
+            product=product,
+            product_name_at_time=product.name,
+            user=user,
+            type=movement_type,
+            quantity=quantity,  # lo que el usuario ingresó
+            unit_type=unit_type,
+            reason=validated_data.get("reason", ""),
+            notes=validated_data.get("notes", ""),
+        )
+
         return movement

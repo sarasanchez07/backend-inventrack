@@ -1,5 +1,7 @@
 # apps/inventory/models.py
 from django.db import models
+from django.core.validators import MinValueValidator
+from decimal import Decimal
 
 class BaseUnit(models.Model):
     name = models.CharField(max_length=50) # mg, ml, kg, unidad, etc.
@@ -67,11 +69,108 @@ class Product(models.Model):
     base_unit = models.ForeignKey(BaseUnit, on_delete=models.SET_NULL, null=True)
     presentation = models.ForeignKey(Presentation, on_delete=models.SET_NULL, null=True)
     expiration_date = models.DateField(blank=True, null=True)
+
+    quantity_per_presentation = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=1,
+        validators=[MinValueValidator(Decimal("1.00"))]
+    )
+
+    stock_initial_presentations = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
     
     # Stock (siempre visible)
-    stock_min = models.IntegerField(default=0)
-    current_stock = models.IntegerField(default=0)
+    stock_min_presentations = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
 
+    current_stock = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    def save(self, *args, **kwargs):
+
+        # Solo convertir si es nuevo producto
+        if not self.pk:
+            self.current_stock = (
+                self.stock_initial_presentations *
+                self.quantity_per_presentation
+            )
+
+        super().save(*args, **kwargs)
+
+    def get_stock_display(self):
+
+        if self.quantity_per_presentation == 0:
+            return f"{self.current_stock} {self.base_unit.name}"
+
+        presentations = int(self.current_stock // self.quantity_per_presentation)
+        units = int(self.current_stock % self.quantity_per_presentation)
+
+        return (
+            f"{self.current_stock} {self.base_unit.name} "
+            f"({presentations} {self.presentation.name} "
+            f"+ {units} {self.base_unit.name})"
+        )
+
+    def get_total_units(self):
+        """
+        Retorna el stock actual en unidades base.
+        """
+        return self.current_stock
+
+    def get_presentations_available(self):
+        """
+        Convierte el stock total en:
+        - cantidad de presentaciones completas
+        - unidades sobrantes
+
+        Ejemplo:
+        580 unidades con 30 por presentación
+        -> 19 presentaciones y 10 unidades
+        """
+
+        if not self.quantity_per_presentation:
+            return {
+                "presentations": 0,
+                "units": self.current_stock
+            }
+
+        total_units = int(self.current_stock)
+        units_per_pres = int(self.quantity_per_presentation)
+
+        presentations = total_units // units_per_pres
+        remaining_units = total_units % units_per_pres
+
+        return {
+            "presentations": presentations,
+            "units": remaining_units
+        }
+
+    def has_low_stock(self):
+
+        min_base = (
+            self.stock_min_presentations *
+            self.quantity_per_presentation
+        )
+
+        return self.current_stock <= min_base
+    
+    def convert_to_base_unit(self, quantity, is_presentation=False):
+
+        if is_presentation:
+            return quantity * self.quantity_per_presentation
+
+        return quantity
+    
     def __str__(self):
         # Esto permite que en el formulario de movimientos veas el nombre
         unit = self.base_unit.name if self.base_unit else "Sin unidad"

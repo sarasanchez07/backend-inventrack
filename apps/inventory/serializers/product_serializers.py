@@ -15,20 +15,18 @@ class ProductSerializer(serializers.ModelSerializer):
             'presentation', 'presentation_name',
             'expiration_date', 'stock_min', 'current_stock'
         ]
+        read_only_fields = ['current_stock']
 
-def validate(self, data):
-    # Si es un PATCH, tomamos el inventario del objeto existente si no viene en 'data'
-    inventory = data.get('inventory') or (self.instance.inventory if self.instance else None)
-    unit = data.get('base_unit') or (self.instance.base_unit if self.instance else None)
-    presentation = data.get('presentation') or (self.instance.presentation if self.instance else None)
+    def validate(self, data):
+        inventory = data.get('inventory') or (self.instance.inventory if self.instance else None)
+        unit = data.get('base_unit') or (self.instance.base_unit if self.instance else None)
+        presentation = data.get('presentation') or (self.instance.presentation if self.instance else None)
 
-    if inventory:
-        # Validar unidad
-        if unit and not inventory.allowed_units.filter(id=unit.id).exists():
-            raise serializers.ValidationError({"base_unit": "Esta unidad no pertenece al inventario seleccionado."})
+        if inventory:
+            if unit and not inventory.allowed_units.filter(id=unit.id).exists():
+                raise serializers.ValidationError({"base_unit": "Esta unidad no pertenece al inventario seleccionado."})
 
-        # Validar presentación
-        if presentation and not inventory.allowed_presentations.filter(id=presentation.id).exists():
-            raise serializers.ValidationError({"presentation": "Esta presentación no pertenece al inventario seleccionado."})
+            if presentation and not inventory.allowed_presentations.filter(id=presentation.id).exists():
+                raise serializers.ValidationError({"presentation": "Esta presentación no pertenece al inventario seleccionado."})
 
-    return data
+        return data
