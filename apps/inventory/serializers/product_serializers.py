@@ -7,15 +7,29 @@ class ProductSerializer(serializers.ModelSerializer):
     unit_name = serializers.ReadOnlyField(source='base_unit.name')
     presentation_name = serializers.ReadOnlyField(source='presentation.name')
 
+    display_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'category', 'category_name', 'inventory',
+            'id', 'name', 'display_name', 'category', 'category_name', 'inventory',
             'concentration', 'base_unit', 'unit_name', 
             'presentation', 'presentation_name',
-            'expiration_date', 'stock_min', 'current_stock'
+            'expiration_date','quantity_per_presentation', 'stock_min_presentations','stock_initial_presentations', 'current_stock'
         ]
-        read_only_fields = ['current_stock']
+        read_only_fields = ['current_stock', 'display_name']
+
+    def get_display_name(self, obj):
+        return str(obj)
+    
+    def create(self, validated_data):
+        # 1. Obtenemos el usuario desde el contexto del request (quien está logueado)
+        request = self.context.get('request')
+        user = request.user if request else None
+        
+        # 2. Creamos el producto pasando el usuario como argumento adicional
+        # Esto disparará el save() del modelo con la variable 'created_by_user'
+        return Product.objects.create(**validated_data, created_by_user=user)
 
     def validate(self, data):
         inventory = data.get('inventory') or (self.instance.inventory if self.instance else None)

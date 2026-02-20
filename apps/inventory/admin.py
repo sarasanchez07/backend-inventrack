@@ -26,6 +26,10 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('inventory', 'category')
     search_fields = ('name',)
 
+    def save_model(self, request, obj, form, change):
+        # Aquí pasamos el usuario del Admin al modelo
+        obj.save(created_by_user=request.user)  
+
     def get_stock_display(self, obj):
         return obj.get_stock_display()
 

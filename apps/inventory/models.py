@@ -2,6 +2,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from django.db import transaction
 
 class BaseUnit(models.Model):
     name = models.CharField(max_length=50) # mg, ml, kg, unidad, etc.
@@ -97,14 +98,33 @@ class Product(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        current_user = kwargs.pop('created_by_user', None)
+        is_new = self.pk is None
 
-        # Solo convertir si es nuevo producto
-        if not self.pk:
+        if is_new:
             self.current_stock = (
                 self.stock_initial_presentations *
                 self.quantity_per_presentation
             )
 
+        with transaction.atomic():
+            # GUARDAR UNA SOLA VEZ
+            super().save(*args, **kwargs)
+
+            if is_new and self.current_stock > 0:
+                from apps.movements.models import Movement
+                
+                # Si current_user es None (Admin), el create fallará si el modelo 
+                # Movement obliga a tener un usuario. 
+                Movement.objects.create(
+                    product=self,
+                    product_name_at_time=self.name,
+                    user=current_user, 
+                    type='IN',
+                    quantity=self.current_stock, 
+                    unit_type='BASE',
+                    reason="Stock inicial de inventario al crear producto"
+                )
         super().save(*args, **kwargs)
 
     def get_stock_display(self):
@@ -172,6 +192,10 @@ class Product(models.Model):
         return quantity
     
     def __str__(self):
-        # Esto permite que en el formulario de movimientos veas el nombre
+        # 1. Si el inventario usa concentración y el producto la tiene, prioridad a la concentración
+        if self.inventory.has_concentration and self.concentration:
+            return f"{self.name} ({self.concentration})"
+        
+        # 2. Si no tiene concentración, mostramos la unidad base (ej: Arroz (kg))
         unit = self.base_unit.name if self.base_unit else "Sin unidad"
         return f"{self.name} ({unit})"
