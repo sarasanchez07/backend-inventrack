@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Movement
 from django.utils.html import format_html
+from django.utils import timezone
 
 @admin.register(Movement)
 class MovementAdmin(admin.ModelAdmin):
@@ -79,6 +80,9 @@ class MovementAdmin(admin.ModelAdmin):
 
     @admin.action(description="Anular movimientos seleccionados")
     def cancel_movements(self, request, queryset):
+
+        ahora = timezone.now()
+
         for movement in queryset:
             if not movement.is_cancelled:
                 # Validación preventiva
@@ -90,7 +94,7 @@ class MovementAdmin(admin.ModelAdmin):
                 
                 # Si pasa la validación, anular
                 movement.is_cancelled = True
-                movement.cancelled_at = admin.utils.timezone.now()
+                movement.cancelled_at = ahora
                 movement.cancelled_by = request.user
                 movement.save()
 
