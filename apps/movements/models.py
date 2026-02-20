@@ -36,20 +36,59 @@ class Movement(models.Model):
     )
     reason = models.TextField(blank=True)
     notes = models.TextField(blank=True, null=True)
+    is_edited = models.BooleanField(default=False)
+    original_quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    edited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='editor_movements'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
 
 
     def save(self, *args, **kwargs):
+        # 1. Ejecutar validaciones de Django (como la de stock insuficiente)
+
+            # 2. Lógica de Auditoría: Si el objeto ya existe en la DB, es una edición
+        old_product = None
+        if self.pk:
+            # Obtenemos la versión que está guardada actualmente en la base de datos
+            # antes de que se sobrescriba con los nuevos cambios
+            old_movement = Movement.objects.get(pk=self.pk)
+
+            if old_movement.product_id != self.product_id:
+                old_product = old_movement.product
+                
+                # Si es la primera vez que se edita este movimiento
+            if not self.is_edited:
+                    # Guardamos la cantidad que tenía originalmente como respaldo histórico
+                self.original_quantity = old_movement.quantity
+                    # Marcamos el movimiento como editado para activar el color naranja
+                self.is_edited = True
+            # 2. Actualizamos el nombre histórico para que la tabla muestre el producto nuevo
+        if self.product:
+            self.product_name_at_time = self.product.name
 
         self.full_clean()
+                
+                # Nota: Si ya estaba editado, mantenemos la 'original_quantity' 
+                # que capturamos en la primera edición para no perder el rastro inicial.
 
+            # 3. Guardar el movimiento en la base de datos
         with transaction.atomic():
-
             super().save(*args, **kwargs)
 
+            
+
+            # 4. Actualizar el stock del producto relacionado
             if self.product:
                 Movement.recalculate_product_stock(self.product)
+
+            if old_product:
+                Movement.recalculate_product_stock(old_product)
 
     def delete(self, *args, **kwargs):
 

@@ -125,7 +125,6 @@ class Product(models.Model):
                     unit_type='BASE',
                     reason="Stock inicial de inventario al crear producto"
                 )
-        super().save(*args, **kwargs)
 
     def get_stock_display(self):
 
