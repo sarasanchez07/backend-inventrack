@@ -10,6 +10,8 @@ class MovementAdmin(admin.ModelAdmin):
         'product_name_at_time',
         'type',
         'quantity_display',
+        'get_unit_fixed',
+        'status_display',
         'is_edited',
         'unit_type',
         'get_unit',
@@ -17,11 +19,21 @@ class MovementAdmin(admin.ModelAdmin):
         'created_at'
     )
 
-    readonly_fields = ('get_unit', 'product_name_at_time', 'is_edited', 'original_quantity', 'edited_by')
+    readonly_fields = (
+        'get_unit',
+        'product_name_at_time', 
+        'is_edited',
+        'original_quantity', 
+        'edited_by', 
+        'unit_name_at_time',
+        'cancelled_at', 
+        'cancelled_by'
+    )
 
-    list_filter = ('type', 'unit_type', 'created_at', 'user','is_edited')
+    list_filter = ('type', 'unit_type', 'created_at', 'user','is_edited', 'is_cancelled')
     search_fields = ('product_name_at_time', 'reason', 'notes')
     ordering = ('-created_at',)
+    actions = ['cancel_movements']
 
     def get_unit(self, obj):
         if obj.product and obj.product.base_unit:
@@ -29,6 +41,11 @@ class MovementAdmin(admin.ModelAdmin):
         return "N/A"
 
     get_unit.short_description = 'Unidad'
+
+    def get_unit_fixed(self, obj):
+        return obj.unit_name_at_time or "N/A"
+    
+    get_unit_fixed.short_description = 'Unidad'
 
     def save_model(self, request, obj, form, change):
         # Si NO es un objeto nuevo (change=True), guardamos quién lo editó
@@ -59,3 +76,27 @@ class MovementAdmin(admin.ModelAdmin):
         return obj.quantity
 
     quantity_display.short_description = 'Cantidad' 
+
+    @admin.action(description="Anular movimientos seleccionados")
+    def cancel_movements(self, request, queryset):
+        for movement in queryset:
+            if not movement.is_cancelled:
+                # Validación preventiva
+                if movement.type == 'IN':
+                    new_stock = movement.product.current_stock - movement.quantity
+                    if new_stock < 0:
+                        self.message_user(request, f"No se puede anular la entrada del producto {movement.product.name} porque el stock quedaría negativo.", level='ERROR')
+                        continue
+                
+                # Si pasa la validación, anular
+                movement.is_cancelled = True
+                movement.cancelled_at = admin.utils.timezone.now()
+                movement.cancelled_by = request.user
+                movement.save()
+
+    def status_display(self, obj):
+        if obj.is_cancelled:
+            return format_html('<span style="color: red; font-weight: bold;">Anulado</span>')
+        return format_html('<span style="color: green;">Activo</span>')
+    
+    status_display.short_description = 'Estado'

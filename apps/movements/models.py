@@ -22,6 +22,8 @@ class Movement(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name='movements')
     # Guardamos el nombre del producto por si el objeto original se borra
     product_name_at_time = models.CharField(max_length=255, blank=True)
+    # Guardamos LA CANTIDAD  del producto por si el objeto original se borra
+    unit_name_at_time = models.CharField(max_length=50, blank=True, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     type = models.CharField(max_length=3, choices=MOVEMENT_TYPES)
     unit_type = models.CharField(
@@ -38,6 +40,7 @@ class Movement(models.Model):
     notes = models.TextField(blank=True, null=True)
     is_edited = models.BooleanField(default=False)
     original_quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
     edited_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.SET_NULL, 
@@ -45,13 +48,20 @@ class Movement(models.Model):
         blank=True,
         related_name='editor_movements'
     )
+
+    is_cancelled = models.BooleanField(default=False, verbose_name="Anulado")
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='cancelled_movements'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-
-
 
     def save(self, *args, **kwargs):
         # 1. Ejecutar validaciones de Django (como la de stock insuficiente)
-
             # 2. Lógica de Auditoría: Si el objeto ya existe en la DB, es una edición
         old_product = None
         if self.pk:
@@ -71,6 +81,8 @@ class Movement(models.Model):
             # 2. Actualizamos el nombre histórico para que la tabla muestre el producto nuevo
         if self.product:
             self.product_name_at_time = self.product.name
+            if self.product.base_unit:
+                self.unit_name_at_time = self.product.base_unit.name
 
         self.full_clean()
                 
@@ -80,9 +92,6 @@ class Movement(models.Model):
             # 3. Guardar el movimiento en la base de datos
         with transaction.atomic():
             super().save(*args, **kwargs)
-
-            
-
             # 4. Actualizar el stock del producto relacionado
             if self.product:
                 Movement.recalculate_product_stock(self.product)
@@ -102,8 +111,8 @@ class Movement(models.Model):
 
     @staticmethod
     def recalculate_product_stock(product):
-
-        movements = Movement.objects.filter(product=product)
+        
+        movements = Movement.objects.filter(product=product, is_cancelled=False)
 
         total_in = Decimal("0")
         total_out = Decimal("0")
