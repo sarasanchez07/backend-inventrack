@@ -84,7 +84,8 @@ class Movement(models.Model):
             if self.product.base_unit:
                 self.unit_name_at_time = self.product.base_unit.name
 
-        self.full_clean()
+        if self.product:
+            self.full_clean()
                 
                 # Nota: Si ya estaba editado, mantenemos la 'original_quantity' 
                 # que capturamos en la primera edición para no perder el rastro inicial.
@@ -111,7 +112,7 @@ class Movement(models.Model):
 
     @staticmethod
     def recalculate_product_stock(product):
-        
+
         movements = Movement.objects.filter(product=product, is_cancelled=False)
 
         total_in = Decimal("0")

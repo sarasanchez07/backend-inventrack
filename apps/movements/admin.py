@@ -15,13 +15,13 @@ class MovementAdmin(admin.ModelAdmin):
         'status_display',
         'is_edited',
         'unit_type',
-        'get_unit',
+        'get_unit_fixed',
         'user',
         'created_at'
     )
 
     readonly_fields = (
-        'get_unit',
+        'get_unit_fixed',
         'product_name_at_time', 
         'is_edited',
         'original_quantity', 
@@ -36,17 +36,16 @@ class MovementAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
     actions = ['cancel_movements']
 
-    def get_unit(self, obj):
+    def get_unit_fixed(self, obj):
+        # 1. Prioridad al respaldo histórico
+        if obj.unit_name_at_time:
+            return obj.unit_name_at_time
+        
+        # 2. Si es N/A, intentar recuperarlo del producto vivo
         if obj.product and obj.product.base_unit:
             return obj.product.base_unit.name
+            
         return "N/A"
-
-    get_unit.short_description = 'Unidad'
-
-    def get_unit_fixed(self, obj):
-        return obj.unit_name_at_time or "N/A"
-    
-    get_unit_fixed.short_description = 'Unidad'
 
     def save_model(self, request, obj, form, change):
         # Si NO es un objeto nuevo (change=True), guardamos quién lo editó
@@ -57,6 +56,8 @@ class MovementAdmin(admin.ModelAdmin):
             obj.user = request.user
             if obj.product:
                 obj.product_name_at_time = obj.product.name
+                if obj.product.base_unit:
+                    obj.unit_name_at_time = obj.product.base_unit.name
         
         super().save_model(request, obj, form, change)
 
@@ -101,6 +102,13 @@ class MovementAdmin(admin.ModelAdmin):
     def status_display(self, obj):
         if obj.is_cancelled:
             return format_html('<span style="color: red; font-weight: bold;">Anulado</span>')
+        
+        if not obj.product:
+            return format_html(
+                '<span style="color: #666; font-weight: bold;">'
+                'Inactivo</span>'
+            )
+        
         return format_html('<span style="color: green;">Activo</span>')
     
     status_display.short_description = 'Estado'
