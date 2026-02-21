@@ -83,14 +83,27 @@ class MovementDetailView(APIView):
 
         if serializer.is_valid():
             try:
+                new_product = None
+
+                # 🔥 Si viene product en el request
+                if "product" in serializer.validated_data:
+                    product_id = serializer.validated_data["product"].id
+                    new_product = Product.objects.get(pk=product_id)
+
                 movement = MovementService.edit_movement(
                     movement=movement,
                     user=request.user,
+                    product=new_product,  # 👈 AHORA SÍ
                     quantity=serializer.validated_data.get("quantity"),
                     reason=serializer.validated_data.get("reason"),
-                    unit_type=serializer.validated_data.get("unit_type"),
                 )
-                return Response(serializer.data)
+
+                movement.refresh_from_db()
+
+                return Response(
+                    MovementSerializer(movement).data
+                )
+
             except Exception as e:
                 return Response(
                     {"error": str(e)},
@@ -114,6 +127,32 @@ class MovementDetailView(APIView):
         serializer = MovementSerializer(movement)
         return Response(serializer.data)
 
+    def delete(self, request, pk):
+
+        try:
+            movement = Movement.objects.get(pk=pk)
+        except Movement.DoesNotExist:
+            return Response(
+                {"error": "Movimiento no encontrado."},
+                status=404
+            )
+
+        try:
+            MovementService.cancel_movement(
+                movement=movement,
+                user=request.user
+            )
+
+            return Response(
+                {"message": "Movimiento anulado correctamente."},
+                status=200
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=400
+            )
     
 class MovementListView(APIView):
     permission_classes = [IsAuthenticated]

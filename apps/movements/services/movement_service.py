@@ -1,12 +1,13 @@
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from apps.inventory.models import Product
 from apps.movements.models import Movement
 from django.contrib.auth import get_user_model  
 from django.db.models import F
 User = get_user_model()
+from django.utils import timezone
 
 from django.db import transaction
 from apps.inventory.models import Inventory
@@ -73,6 +74,11 @@ class MovementService:
 
         product = Product.objects.select_for_update().get(pk=product.pk)
 
+        quantity = Decimal(str(quantity)).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_HALF_UP
+        )
+
         # ✅ stock inicial se SETEA, no se suma
         product.current_stock = quantity
         product.save(update_fields=["current_stock"])
@@ -92,41 +98,102 @@ class MovementService:
 
     @staticmethod
     @transaction.atomic
-    def edit_movement(*, movement, user, quantity=None, reason=None):
-        # 1. Bloqueamos el movimiento y el producto relacionado
+    def edit_movement(*, movement, user, product=None, quantity=None, reason=None):
+
         movement = Movement.objects.select_for_update().get(pk=movement.pk)
-        product = Product.objects.select_for_update().get(pk=movement.product.pk)
+        original_product = Product.objects.select_for_update().get(pk=movement.product.pk)
 
-        if quantity is not None:
+        old_qty = Decimal(str(movement.quantity))
+        movement_type = movement.type
+
+        # 🔥 CASO 1: CAMBIO DE PRODUCTO
+        if product and product != movement.product:
+
+            new_product = Product.objects.select_for_update().get(pk=product.pk)
+
+            # 1️⃣ Revertir impacto del producto original
+            if movement_type == "OUT":
+                original_product.current_stock = F("current_stock") + old_qty
+            else:
+                original_product.current_stock = F("current_stock") - old_qty
+
+            original_product.save(update_fields=["current_stock"])
+
+            # 2️⃣ Aplicar impacto al nuevo producto
+            if movement_type == "OUT":
+                new_product.current_stock = F("current_stock") - old_qty
+            else:
+                new_product.current_stock = F("current_stock") + old_qty
+
+            new_product.save(update_fields=["current_stock"])
+
+            movement.product = new_product
+            movement.product_name_at_time = new_product.name
+
+        # 🔥 CASO 2: CAMBIO DE CANTIDAD
+        if quantity is not None and quantity != movement.quantity:
+
             new_qty = Decimal(str(quantity))
-            old_qty = Decimal(str(movement.quantity))
-
-            # Calculamos la diferencia
-            # Si el movimiento es de salida (OUT), el impacto es inverso
             delta = new_qty - old_qty
-            
-            if movement.type == "OUT":
-                # Si era una salida y ahora la cantidad es mayor, 
-                # debemos RESTAR más stock del producto.
+
+            product_locked = Product.objects.select_for_update().get(pk=movement.product.pk)
+
+            if movement_type == "OUT":
                 actual_delta = -delta
             else:
-                # Si era una entrada y ahora es mayor, SUMAMOS stock.
                 actual_delta = delta
 
-            # --- AQUÍ VA LA LÓGICA DE STOCK ---
-            product.current_stock = F("current_stock") + actual_delta
-            product.save(update_fields=["current_stock"])
-            # ----------------------------------
+            product_locked.current_stock = F("current_stock") + actual_delta
+            product_locked.save(update_fields=["current_stock"])
 
-            # Auditoría
-            if not movement.is_edited:
-                movement.original_quantity = old_qty
-                movement.is_edited = True
-            
             movement.quantity = new_qty
+
+        # Auditoría
+        if not movement.is_edited:
+            movement.original_quantity = old_qty
+            movement.is_edited = True
 
         if reason is not None:
             movement.reason = reason
 
+        movement.edited_by = user
         movement.save()
+
+        return movement
+            
+
+    @staticmethod
+    @transaction.atomic
+    def cancel_movement(*, movement, user):
+
+        movement = Movement.objects.select_for_update().get(pk=movement.pk)
+        product = Product.objects.select_for_update().get(pk=movement.product.pk)
+
+        if movement.is_cancelled:
+            raise ValidationError("El movimiento ya está anulado.")
+
+        qty = Decimal(str(movement.quantity))
+
+        # 🔥 Revertir impacto en stock
+        if movement.type == "IN":
+            # Si fue una entrada, al anular restamos
+            if product.current_stock < qty:
+                raise ValidationError(
+                    "No se puede anular porque el stock quedaría negativo."
+                )
+            product.current_stock = F("current_stock") - qty
+
+        else:  # OUT
+            # Si fue una salida, al anular sumamos
+            product.current_stock = F("current_stock") + qty
+
+        product.save(update_fields=["current_stock"])
+        product.refresh_from_db()
+
+        movement.is_cancelled = True
+        movement.cancelled_by = user
+        movement.cancelled_at = timezone.now()
+
+        movement.save(update_fields=["is_cancelled", "cancelled_by", "cancelled_at"])
+
         return movement

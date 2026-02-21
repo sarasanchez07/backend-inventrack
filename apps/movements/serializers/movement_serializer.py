@@ -43,14 +43,22 @@ class MovementSerializer(serializers.ModelSerializer):
         Validación global del Serializer.
         Aquí verificamos que si es una salida, haya stock suficiente.
         """
-        product = data.get('product')
+        product = data.get('product') or getattr(self.instance, 'product', None)
         m_type = data.get('type')
-        quantity = data.get('quantity')
+        quantity = data.get('quantity') or getattr(self.instance, 'quantity', None)
         unit_type = data.get('unit_type', 'BASE')
 
         # Si el producto no existe (por seguridad)
         if not product:
-            raise serializers.ValidationError({"product": "El producto no existe o está inactivo."})
+            raise serializers.ValidationError({
+                "product": "El movimiento no tiene producto asociado."
+            })
+
+        # 🚫 No permitir editar movimientos anulados
+        if self.instance and self.instance.is_cancelled:
+            raise serializers.ValidationError({
+                "error": "No se puede editar un movimiento anulado."
+            })
 
         # Solo validamos stock en SALIDAS (OUT)
         if m_type == 'OUT':
