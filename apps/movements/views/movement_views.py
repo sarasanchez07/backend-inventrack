@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from apps.inventory.models import Product
 from ..serializers.movement_serializer import MovementSerializer
 from ..models import Movement
+from apps.movements.services.movement_service import MovementService
 
 class MovementCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -34,20 +35,25 @@ class MovementCreateView(APIView):
 
         if serializer.is_valid():
             try:
-                movement = serializer.save(
+                movement = MovementService.create_movement(
+                    product=product,
                     user=request.user,
-                    product_name_at_time=product.name
+                    movement_type=serializer.validated_data["type"],
+                    quantity=serializer.validated_data["quantity"],
+                    unit_type=serializer.validated_data.get("unit_type", "BASE"),
+                    reason=serializer.validated_data.get("reason", "")
                 )
+
                 return Response(
                     MovementSerializer(movement).data,
                     status=status.HTTP_201_CREATED
                 )
+
             except Exception as e:
                 return Response(
                     {"error": str(e)},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class MovementDetailView(APIView):
@@ -77,7 +83,13 @@ class MovementDetailView(APIView):
 
         if serializer.is_valid():
             try:
-                serializer.save()
+                movement = MovementService.edit_movement(
+                    movement=movement,
+                    user=request.user,
+                    quantity=serializer.validated_data.get("quantity"),
+                    reason=serializer.validated_data.get("reason"),
+                    unit_type=serializer.validated_data.get("unit_type"),
+                )
                 return Response(serializer.data)
             except Exception as e:
                 return Response(

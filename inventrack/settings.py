@@ -12,6 +12,8 @@ from datetime import timedelta
 from corsheaders.defaults import default_headers
 import sys
 
+TESTING = "test" in sys.argv
+
 # --------------------------------------------------
 # BASE
 # --------------------------------------------------
@@ -63,7 +65,7 @@ INSTALLED_APPS = [
     # Apps locales (InvenTrack)
     "apps.authentication",
     "apps.inventory",
-    "apps.movements",
+    "apps.movements",   
     #"apps.reports",
     #"apps.alerts",
     #"apps.dashboard",

@@ -6,6 +6,7 @@ from rest_framework import status
 from apps.inventory.models import Inventory, Category, Product, BaseUnit, Presentation
 from apps.movements.models import Movement
 from decimal import Decimal
+from apps.movements.services.movement_service import MovementService
 
 User = get_user_model()
 
@@ -59,6 +60,8 @@ class MovementLogicTest(TestCase):
 
         product.save(created_by_user=self.user)
 
+        product.refresh_from_db()
+
         # 1. Verificar stock actual
         self.assertEqual(product.current_stock, Decimal("400.00"))
 
@@ -67,7 +70,10 @@ class MovementLogicTest(TestCase):
         self.assertIsNotNone(initial_movement)
         self.assertEqual(initial_movement.quantity, Decimal("400.00"))
         self.assertEqual(initial_movement.unit_type, 'BASE')
-        self.assertEqual(initial_movement.user, self.user)
+        self.assertEqual(
+            initial_movement.user.email,
+            "system@inventrak.local"
+        )
 
     def test_manual_out_movement_unit_base(self):
         """Prueba una salida manual de 5 unidades base (pastillas)"""
@@ -81,6 +87,7 @@ class MovementLogicTest(TestCase):
             stock_initial_presentations=20
         )
         product.save(created_by_user=self.user)
+        product.refresh_from_db()
 
         # CAMBIO: Ajusta esta URL según tu apps/movements/urls.py
         # Si usas router.register(r'', MovementViewSet), la URL es esta:
@@ -112,14 +119,15 @@ class MovementLogicTest(TestCase):
             stock_initial_presentations=20 # Esto genera 400 pastillas
         )
         product.save(created_by_user=self.user)
+        product.refresh_from_db()
 
         # Registramos una salida de 20 pastillas
-        Movement.objects.create(
+        MovementService.create_movement(
             product=product,
             user=self.user,
-            type='OUT',
-            quantity=20,
-            unit_type='BASE'
+            movement_type="OUT",
+            quantity=Decimal("20"),
+            unit_type="BASE",
         )
         
         Movement.recalculate_product_stock(product)

@@ -13,7 +13,7 @@ class MovementSerializer(serializers.ModelSerializer):
         model = Movement
         fields = [
             'id', 'product', 'product_name', 'unit_name', 'user_name', 
-            'type', 'quantity', 'reason', 'notes', 'created_at', 'is_edited', 'original_quantity', 'edited_by','unit_name_at_time'
+            'type', 'quantity', 'reason', 'notes', 'created_at', 'is_edited', 'original_quantity', 'edited_by','unit_name_at_time', 'status'
         ]
         read_only_fields = ['user', 'is_edited', 'original_quantity', 'edited_by']
     

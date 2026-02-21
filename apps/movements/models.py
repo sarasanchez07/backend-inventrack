@@ -8,6 +8,9 @@ from django.core.exceptions import ValidationError
 
 
 class Movement(models.Model):
+
+    _created_from_service = False
+
     MOVEMENT_TYPES = (
         ('IN', 'Entrada'),
         ('OUT', 'Salida'),
@@ -61,54 +64,26 @@ class Movement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        # 1. Ejecutar validaciones de Django (como la de stock insuficiente)
-            # 2. Lógica de Auditoría: Si el objeto ya existe en la DB, es una edición
-        old_product = None
-        if self.pk:
-            # Obtenemos la versión que está guardada actualmente en la base de datos
-            # antes de que se sobrescriba con los nuevos cambios
-            old_movement = Movement.objects.get(pk=self.pk)
 
-            if old_movement.product_id != self.product_id:
-                old_product = old_movement.product
-                
-                # Si es la primera vez que se edita este movimiento
-            if not self.is_edited:
-                    # Guardamos la cantidad que tenía originalmente como respaldo histórico
-                self.original_quantity = old_movement.quantity
-                    # Marcamos el movimiento como editado para activar el color naranja
-                self.is_edited = True
-            # 2. Actualizamos el nombre histórico para que la tabla muestre el producto nuevo
+        # impedir creación fuera del service
+        if not self.pk and not getattr(self, "_created_from_service", False):
+            raise RuntimeError(
+                "Movement must be created using MovementService"
+            )
+
+        # mantener datos históricos
         if self.product:
             self.product_name_at_time = self.product.name
             if self.product.base_unit:
                 self.unit_name_at_time = self.product.base_unit.name
 
-        if self.product:
-            self.full_clean()
-                
-                # Nota: Si ya estaba editado, mantenemos la 'original_quantity' 
-                # que capturamos en la primera edición para no perder el rastro inicial.
+        self.full_clean()
 
-            # 3. Guardar el movimiento en la base de datos
-        with transaction.atomic():
-            super().save(*args, **kwargs)
-            # 4. Actualizar el stock del producto relacionado
-            if self.product:
-                Movement.recalculate_product_stock(self.product)
-
-            if old_product:
-                Movement.recalculate_product_stock(old_product)
+        super().save(*args, **kwargs)
+            
 
     def delete(self, *args, **kwargs):
-
-        with transaction.atomic():
-
-            product = self.product
-            super().delete(*args, **kwargs)
-
-            if product:
-                Movement.recalculate_product_stock(product)
+        super().delete(*args, **kwargs)
 
     @staticmethod
     def recalculate_product_stock(product):
@@ -136,6 +111,12 @@ class Movement(models.Model):
     def clean(self):
 
         if not self.product:
+            raise ValidationError("El movimiento debe tener un producto.")
+
+        if self.quantity <= 0:
+            raise ValidationError("La cantidad debe ser mayor a cero.")
+
+        '''if not self.product:
             return
 
         # Convertimos la cantidad a unidad base
@@ -170,7 +151,7 @@ class Movement(models.Model):
         # Si es salida validamos
         if self.type == "OUT":
             if real_quantity > current_stock:
-                raise ValidationError("Stock insuficiente para realizar esta salida.")
+                raise ValidationError("Stock insuficiente para realizar esta salida.")'''
 
 
     def __str__(self):
