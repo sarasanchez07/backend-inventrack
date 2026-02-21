@@ -97,35 +97,6 @@ class Product(models.Model):
         default=0
     )
 
-    def save(self, *args, **kwargs):
-        current_user = kwargs.pop('created_by_user', None)
-        is_new = self.pk is None
-
-        if is_new:
-            self.current_stock = (
-                self.stock_initial_presentations *
-                self.quantity_per_presentation
-            )
-
-        with transaction.atomic():
-            # GUARDAR UNA SOLA VEZ
-            super().save(*args, **kwargs)
-
-            if is_new and self.current_stock > 0:
-                from apps.movements.models import Movement
-                
-                # Si current_user es None (Admin), el create fallará si el modelo 
-                # Movement obliga a tener un usuario. 
-                Movement.objects.create(
-                    product=self,
-                    product_name_at_time=self.name,
-                    user=current_user, 
-                    type='IN',
-                    quantity=self.current_stock, 
-                    unit_type='BASE',
-                    reason="Stock inicial de inventario al crear producto"
-                )
-
     def get_stock_display(self):
 
         if self.quantity_per_presentation == 0:
