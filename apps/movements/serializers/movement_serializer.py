@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from ..models import Movement
+from rest_framework.exceptions import ValidationError
+from apps.movements.services.movement_service import MovementService
 
 class MovementSerializer(serializers.ModelSerializer):
     user_name = serializers.ReadOnlyField(source='user.email')
@@ -54,7 +56,7 @@ class MovementSerializer(serializers.ModelSerializer):
                 "product": "El movimiento no tiene producto asociado."
             })
 
-        # 🚫 No permitir editar movimientos anulados
+        # No permitir editar movimientos anulados
         if self.instance and self.instance.is_cancelled:
             raise serializers.ValidationError({
                 "error": "No se puede editar un movimiento anulado."
@@ -77,10 +79,28 @@ class MovementSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        # 1. Obtenemos el usuario de la petición (quien está logueado en Postman/App)
-        request = self.context.get('request')
-        if request and request.user:
-            instance.edited_by = request.user
+        #El momvimiento inicial no puede ser editado
+        if instance.is_initial:
+            raise ValidationError(
+                "El movimiento inicial no puede ser editado."
+            )
         
-        # 2. El método save() del modelo se encargará del resto (is_edited y original_quantity)
-        return super().update(instance, validated_data)
+        #No puede agregar una cantidad menor a 0
+        new_quantity = validated_data.get('quantity', instance.quantity)
+
+        if new_quantity <= 0:
+            raise ValidationError(
+                "La cantidad debe ser mayor a 0."
+            )
+    
+        # 1. Obtenemos el usuario de la petición (quien está logueado en Postman/App)
+        request = self.context.get("request")
+        user = request.user if request else None
+
+        # Delegar TODA la lógica al service
+        return MovementService.edit_movement(
+            movement=instance,
+            user=user,
+            quantity=new_quantity,
+            reason=validated_data.get("reason")
+        )

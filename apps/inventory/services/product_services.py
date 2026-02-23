@@ -22,6 +22,7 @@ class ProductService:
             Movement.objects.create(
                 product=product,
                 user=user,
+                is_initial=True,
                 quantity=initial_stock,
                 type='IN',
                 reason="Stock inicial de inventario al crear producto",

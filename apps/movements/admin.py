@@ -12,6 +12,7 @@ class MovementAdmin(admin.ModelAdmin):
 
     list_display = (
         "id",
+        "is_initial",
         "product_name_at_time",
         "type",
         "quantity_display",
@@ -24,6 +25,7 @@ class MovementAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "product_name_at_time",
+        "is_initial",
         "is_edited",
         "original_quantity",
         "edited_by",
@@ -82,9 +84,9 @@ class MovementAdmin(admin.ModelAdmin):
         MovementService.edit_movement(
             movement=original,
             user=request.user,
-            quantity=obj.quantity,
-            product=obj.product, 
-            reason=obj.reason,
+            quantity=obj.quantity if obj.quantity != original.quantity else None,
+            product=obj.product if obj.product != original.product else None,
+            reason=obj.reason if obj.reason != original.reason else None,
         )
 
     # Permisos (según lo que decidieron)

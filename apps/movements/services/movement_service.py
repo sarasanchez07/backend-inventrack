@@ -30,11 +30,19 @@ class MovementService:
         product = Product.objects.select_for_update().get(pk=product.pk)
         real_quantity = Decimal(str(quantity))
 
-        # ---- calcular nuevo stock ----
-        if movement_type == "IN":
-            product.current_stock = F("current_stock") + real_quantity
-        else:
+        if real_quantity <= 0:
+            raise ValidationError("La cantidad debe ser mayor a 0.")
+        
+        # ---- calcular nuevo stock de salida ----
+        if movement_type == "OUT":
+            if product.current_stock < real_quantity:
+                raise ValidationError(
+                    f"Stock insuficiente. Disponible: {product.current_stock}"
+                )
             product.current_stock = F("current_stock") - real_quantity
+
+        else:  # IN
+            product.current_stock = F("current_stock") + real_quantity
 
         product.save(update_fields=["current_stock"])
         product.refresh_from_db()
@@ -91,6 +99,7 @@ class MovementService:
             quantity=quantity,
             unit_type="BASE",
             reason="Carga inicial automática",
+            is_initial=True,
         )
 
         movement._created_from_service = True
@@ -101,17 +110,21 @@ class MovementService:
     def edit_movement(*, movement, user, product=None, quantity=None, reason=None):
 
         movement = Movement.objects.select_for_update().get(pk=movement.pk)
+
+        if movement.is_initial:
+            raise ValidationError("El movimiento inicial no puede ser editado.")
+    
         original_product = Product.objects.select_for_update().get(pk=movement.product.pk)
 
         old_qty = Decimal(str(movement.quantity))
         movement_type = movement.type
 
-        # 🔥 CASO 1: CAMBIO DE PRODUCTO
+        # CASO 1: CAMBIO DE PRODUCTO
         if product and product != movement.product:
 
             new_product = Product.objects.select_for_update().get(pk=product.pk)
 
-            # 1️⃣ Revertir impacto del producto original
+            # 1️Revertir impacto del producto original
             if movement_type == "OUT":
                 original_product.current_stock = F("current_stock") + old_qty
             else:
@@ -119,7 +132,7 @@ class MovementService:
 
             original_product.save(update_fields=["current_stock"])
 
-            # 2️⃣ Aplicar impacto al nuevo producto
+            # 2️ Aplicar impacto al nuevo producto
             if movement_type == "OUT":
                 new_product.current_stock = F("current_stock") - old_qty
             else:
@@ -130,21 +143,33 @@ class MovementService:
             movement.product = new_product
             movement.product_name_at_time = new_product.name
 
-        # 🔥 CASO 2: CAMBIO DE CANTIDAD
-        if quantity is not None and quantity != movement.quantity:
+        # CASO 2: CAMBIO DE CANTIDAD
+        if quantity is not None:
 
             new_qty = Decimal(str(quantity))
-            delta = new_qty - old_qty
 
-            product_locked = Product.objects.select_for_update().get(pk=movement.product.pk)
+            if new_qty <= 0:
+                raise ValidationError("La cantidad debe ser mayor a 0.")
 
+            # 1️⃣ Restaurar efecto anterior
             if movement_type == "OUT":
-                actual_delta = -delta
+                original_product.current_stock += old_qty
             else:
-                actual_delta = delta
+                original_product.current_stock -= old_qty
 
-            product_locked.current_stock = F("current_stock") + actual_delta
-            product_locked.save(update_fields=["current_stock"])
+            original_product.refresh_from_db()
+
+            # 2️⃣ Validar nuevo impacto
+            if movement_type == "OUT":
+                if original_product.current_stock < new_qty:
+                    raise ValidationError(
+                        "No hay stock suficiente para esta modificación."
+                    )
+                original_product.current_stock -= new_qty
+            else:
+                original_product.current_stock += new_qty
+
+            original_product.save(update_fields=["current_stock"])
 
             movement.quantity = new_qty
 
@@ -174,7 +199,7 @@ class MovementService:
 
         qty = Decimal(str(movement.quantity))
 
-        # 🔥 Revertir impacto en stock
+        #  Revertir impacto en stock
         if movement.type == "IN":
             # Si fue una entrada, al anular restamos
             if product.current_stock < qty:

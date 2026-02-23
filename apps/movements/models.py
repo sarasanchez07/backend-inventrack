@@ -62,6 +62,7 @@ class Movement(models.Model):
         related_name='cancelled_movements'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    is_initial = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
 
