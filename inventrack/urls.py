@@ -11,6 +11,7 @@ urlpatterns = [
     path('auth/', include('apps.authentication.urls')),
     path('inventory/', include('apps.inventory.urls')),
     path('movements/', include('apps.movements.urls')),
+    path('reports/', include('apps.reports.urls')),
 
     # Documentación Swagger
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
