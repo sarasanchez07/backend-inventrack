@@ -3,7 +3,7 @@ from apps.inventory.models import Inventory, BaseUnit, Presentation
 class InventoryService:
     @staticmethod
     def create_inventory_with_config(data):
-        option = data.get('selected_option')
+        option = int(data.get('selected_option', 1))
         inventory = Inventory.objects.create(
             name=data.get('name'),
             description=data.get('description'),

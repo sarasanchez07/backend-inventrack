@@ -45,6 +45,7 @@ class AuthService:
                 "id": user.id,
                 "email": user.email,
                 "name": f"{user.first_name} {user.last_name}",
+                "role": user.role,
             },
         }
 

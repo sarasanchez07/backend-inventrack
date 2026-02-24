@@ -3,6 +3,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from django.db import transaction
+from django.conf import settings
 
 class BaseUnit(models.Model):
     name = models.CharField(max_length=50) # mg, ml, kg, unidad, etc.
@@ -64,6 +65,13 @@ class Product(models.Model):
     name = models.CharField(max_length=100)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        verbose_name="Creado por"
+    )
     
     # Campos opcionales que se activan según el inventario
     concentration = models.CharField(max_length=50, blank=True, null=True)
@@ -98,6 +106,10 @@ class Product(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        # Capturamos el usuario si viene del Admin o un servicio
+        created_by_user = kwargs.pop('created_by_user', None)
+        if created_by_user:
+            self.created_by = created_by_user
         super().save(*args, **kwargs)
 
     def get_stock_display(self):

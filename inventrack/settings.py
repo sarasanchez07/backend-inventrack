@@ -68,7 +68,7 @@ INSTALLED_APPS = [
     "apps.movements",   
     "apps.reports",
     "apps.alerts",
-    #"apps.dashboard",
+    "apps.dashboard",
 ]
 
 # --------------------------------------------------
