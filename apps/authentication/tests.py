@@ -17,7 +17,7 @@ class AuthenticationTests(APITestCase):
         self.admin_user = User.objects.create_user(
             email="admin@fundacion.org",
             password="password123",
-            role="admin",
+            role=User.Role.ADMIN,
             first_name="Admin"
         )
         

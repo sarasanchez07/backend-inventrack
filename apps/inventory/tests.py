@@ -31,7 +31,7 @@ class InventoryTests(APITestCase):
         self.cat_granos = Category.objects.create(name="Granos", inventory=self.inv_alimentos)
 
         # 4. Crear Usuarios
-        self.admin = User.objects.create_user(email="admin@test.com", password="123", role="admin")
+        self.admin = User.objects.create_user(email="admin@test.com", password="123", role=User.Role.ADMIN)
         self.staff_alimentos = User.objects.create_user(email="staff@test.com", password="123", role="estudiante")
         self.staff_alimentos.assigned_inventories.add(self.inv_alimentos)
 

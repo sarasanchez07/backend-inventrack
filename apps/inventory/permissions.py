@@ -10,7 +10,8 @@ class InventoryPermissionService:
         """
         Regla de VISIBILIDAD (lo que puede ver).
         """
-        if user.role == "admin":
+        from apps.authentication.models.user import User
+        if user.role == User.Role.ADMIN:
             return Product.objects.all()
 
         return Product.objects.filter(
@@ -22,7 +23,8 @@ class InventoryPermissionService:
         """
         Regla de CREACIÓN.
         """
-        if user.role == "admin":
+        from apps.authentication.models.user import User
+        if user.role == User.Role.ADMIN:
             return True
 
         return user.assigned_inventories.filter(
@@ -34,7 +36,8 @@ class InventoryPermissionService:
         """
         Regla PATCH y DELETE.
         """
-        if user.role == "admin":
+        from apps.authentication.models.user import User
+        if user.role == User.Role.ADMIN:
             return True
 
         return user.assigned_inventories.filter(

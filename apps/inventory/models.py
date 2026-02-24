@@ -98,8 +98,6 @@ class Product(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        # solo guardamos normalmente
-        kwargs.pop("created_by_user", None)  # evitamos error en tests
         super().save(*args, **kwargs)
 
     def get_stock_display(self):

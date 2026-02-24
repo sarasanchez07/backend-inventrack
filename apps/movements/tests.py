@@ -7,6 +7,7 @@ from apps.inventory.models import Inventory, Category, Product, BaseUnit, Presen
 from apps.movements.models import Movement
 from decimal import Decimal
 from apps.movements.services.movement_service import MovementService
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -18,7 +19,7 @@ class MovementLogicTest(TestCase):
         self.user = User.objects.create_user(
             email="testuser@fundacion.com", 
             password="password123",
-            role="ADMIN"
+            role=User.Role.ADMIN
         )
 
         # 2. Configuración de Unidades y Presentación
@@ -47,18 +48,20 @@ class MovementLogicTest(TestCase):
         de entrada automático por el stock inicial en UNIDADES BASE.
         """
         # Amoxaxilina: 20 tabletas x 20 pastillas = 400 pastillas iniciales
-        product = Product(
-            name="Amoxaxilina",
-            concentration="500mg",
-            category=self.category,
-            inventory=self.inventory,
-            base_unit=self.unit_pastilla,
-            presentation=self.pres_tableta,
-            quantity_per_presentation=20,
-            stock_initial_presentations=20
-        )
-
-        product.save(created_by_user=self.user)
+        # product.save() # No llamar a save directamente si queremos disparar lógica de Service
+        # En tests de integración, es mejor usar el Service:
+        from apps.inventory.services.product_services import ProductService
+        product_data = {
+            "name": "Amoxaxilina",
+            "concentration": "500mg",
+            "category": self.category,
+            "inventory": self.inventory,
+            "base_unit": self.unit_pastilla,
+            "presentation": self.pres_tableta,
+            "quantity_per_presentation": 20,
+            "stock_initial_presentations": 20
+        }
+        product = ProductService.create_product(product_data, self.user)
 
         product.refresh_from_db()
 
@@ -72,26 +75,28 @@ class MovementLogicTest(TestCase):
         self.assertEqual(initial_movement.unit_type, 'BASE')
         self.assertEqual(
             initial_movement.user.email,
-            "system@inventrak.local"
+            self.user.email
         )
 
     def test_manual_out_movement_unit_base(self):
         """Prueba una salida manual de 5 unidades base (pastillas)"""
-        product = Product(
-            name="Amoxaxilina",
-            category=self.category,
-            inventory=self.inventory,
-            base_unit=self.unit_pastilla,
-            presentation=self.pres_tableta,
-            quantity_per_presentation=20,
-            stock_initial_presentations=20
-        )
-        product.save(created_by_user=self.user)
+        from apps.inventory.services.product_services import ProductService
+        product_data = {
+            "name": "Amoxaxilina",
+            "category": self.category,
+            "inventory": self.inventory,
+            "base_unit": self.unit_pastilla,
+            "presentation": self.pres_tableta,
+            "quantity_per_presentation": 20,
+            "stock_initial_presentations": 20
+        }
+        product = ProductService.create_product(product_data, self.user)
         product.refresh_from_db()
 
         # CAMBIO: Ajusta esta URL según tu apps/movements/urls.py
         # Si usas router.register(r'', MovementViewSet), la URL es esta:
-        url = "/api/movements/register/" 
+        # url = "/api/movements/register/" 
+        url = reverse('movement-register')
         
         data = {
             "product": product.id,
@@ -109,16 +114,17 @@ class MovementLogicTest(TestCase):
 
     def test_recalculate_stock_consistency(self):
         """Verifica que el recálculo funcione con la carga inicial automática"""
-        product = Product(
-            name="Amoxaxilina",
-            category=self.category,
-            inventory=self.inventory,
-            base_unit=self.unit_pastilla,
-            presentation=self.pres_tableta,
-            quantity_per_presentation=20,
-            stock_initial_presentations=20 # Esto genera 400 pastillas
-        )
-        product.save(created_by_user=self.user)
+        from apps.inventory.services.product_services import ProductService
+        product_data = {
+            "name": "Amoxaxilina",
+            "category": self.category,
+            "inventory": self.inventory,
+            "base_unit": self.unit_pastilla,
+            "presentation": self.pres_tableta,
+            "quantity_per_presentation": 20,
+            "stock_initial_presentations": 20 # Esto genera 400 pastillas
+        }
+        product = ProductService.create_product(product_data, self.user)
         product.refresh_from_db()
 
         # Registramos una salida de 20 pastillas
@@ -147,18 +153,19 @@ class MovementLogicTest(TestCase):
 
     def test_insufficient_stock_validation(self):
         """Verifica que el sistema impida salidas mayores al stock disponible"""
-        product = Product(
-            name="Amoxaxilina",
-            category=self.category,
-            inventory=self.inventory,
-            base_unit=self.unit_pastilla,
-            presentation=self.pres_tableta,
-            quantity_per_presentation=20,
-            stock_initial_presentations=1 # Solo 20 pastillas
-        )
-        product.save(created_by_user=self.user)
+        from apps.inventory.services.product_services import ProductService
+        product_data = {
+            "name": "Amoxaxilina",
+            "category": self.category,
+            "inventory": self.inventory,
+            "base_unit": self.unit_pastilla,
+            "presentation": self.pres_tableta,
+            "quantity_per_presentation": 20,
+            "stock_initial_presentations": 1 # Solo 20 pastillas
+        }
+        product = ProductService.create_product(product_data, self.user)
 
-        url = "/api/movements/register/" # Ajustado igual que arriba
+        url = reverse('movement-register')
         data = {
             "product": product.id,
             "type": "OUT",

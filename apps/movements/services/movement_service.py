@@ -76,15 +76,16 @@ class MovementService:
     
     @staticmethod
     @transaction.atomic
-    def create_initial_movement(product, quantity):
+    def create_initial_movement(product, quantity, user=None):
 
-        system_user = MovementService.get_system_user()
+        if user is None:
+            user = MovementService.get_system_user()
 
         product = Product.objects.select_for_update().get(pk=product.pk)
 
         quantity = Decimal(str(quantity)).quantize(
-        Decimal("0.01"),
-        rounding=ROUND_HALF_UP
+            Decimal("0.01"),
+            rounding=ROUND_HALF_UP
         )
 
         # ✅ stock inicial se SETEA, no se suma
@@ -94,11 +95,11 @@ class MovementService:
         movement = Movement(
             product=product,
             product_name_at_time=product.name,
-            user=system_user,
+            user=user,
             type="IN",
             quantity=quantity,
             unit_type="BASE",
-            reason="Carga inicial automática",
+            reason="Carga inicial de inventario",
             is_initial=True,
         )
 

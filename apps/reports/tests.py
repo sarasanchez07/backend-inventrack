@@ -24,7 +24,7 @@ class ReportSecurityTests(APITestCase):
 
         # 2. Usuarios
         self.admin = User.objects.create_user(
-            email="admin@test.com", password="123", role="admin"
+            email="admin@test.com", password="123", role=User.Role.ADMIN
         )
         self.staff_1 = User.objects.create_user(
             email="staff1@test.com", password="123", role="estudiante"

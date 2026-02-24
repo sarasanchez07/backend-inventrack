@@ -4,29 +4,31 @@ from django.db import transaction
 from apps.inventory.models import Product
 from apps.movements.models import Movement
 
+from apps.movements.services.movement_service import MovementService
+from decimal import Decimal
+
 class ProductService:
     @staticmethod
     @transaction.atomic
     def create_product(validated_data, user):
         """
-        Crea un producto y registra automáticamente el movimiento inicial.
+        Crea un producto y registra automáticamente el movimiento inicial si corresponde.
         """
-        # Extraemos el stock inicial para procesarlo
-        initial_stock = validated_data.get('initial_stock', 0)
-        
         # 1. Creamos el producto
         product = Product.objects.create(**validated_data)
         
-        # 2. Si hay stock, registramos el movimiento de entrada (IN)
-        if initial_stock > 0:
-            Movement.objects.create(
+        # 2. Calculamos y registramos el movimiento inicial si hay stock
+        stock_initial_presentations = validated_data.get('stock_initial_presentations', 0)
+        
+        if stock_initial_presentations > 0:
+            quantity_per_presentation = validated_data.get('quantity_per_presentation', 1)
+            initial_stock = Decimal(str(stock_initial_presentations)) * Decimal(str(quantity_per_presentation))
+            
+            # Delegamos la creación del movimiento al servicio correspondiente
+            MovementService.create_initial_movement(
                 product=product,
-                user=user,
-                is_initial=True,
                 quantity=initial_stock,
-                type='IN',
-                reason="Stock inicial de inventario al crear producto",
-                # Si usas presentaciones (cajas/frascos), asegúrate de pasarlas aquí
+                user=user # Pasamos el usuario que crea el producto si queremos auditoría real
             )
             
         return product

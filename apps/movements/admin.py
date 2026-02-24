@@ -91,13 +91,16 @@ class MovementAdmin(admin.ModelAdmin):
 
     # Permisos (según lo que decidieron)
     def has_change_permission(self, request, obj=None):
-        return request.user.role in ["admin", "personal"]
+        from apps.authentication.models.user import User
+        return request.user.role in [User.Role.ADMIN, "personal"]
 
     def has_add_permission(self, request):
-        return request.user.role in ["admin", "personal"]
+        from apps.authentication.models.user import User
+        return request.user.role in [User.Role.ADMIN, "personal"]
 
     def has_delete_permission(self, request, obj=None):
-        return request.user.role == "admin"
+        from apps.authentication.models.user import User
+        return request.user.role == User.Role.ADMIN
 
     # -------- Visual helpers --------
 
