@@ -231,7 +231,7 @@ CORS_ALLOWED_ORIGINS = [
     ).split(",")
 ]
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + ["authorization"]
 

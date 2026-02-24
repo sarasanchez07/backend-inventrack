@@ -96,7 +96,7 @@ class ReportSecurityTests(APITestCase):
     def test_export_format_pdf_status_code(self):
         """Verifica que la solicitud de PDF devuelva el Content-Type correcto"""
         self.client.force_authenticate(user=self.admin)
-        response = self.client.get(self.url, {'format': 'pdf'})
+        response = self.client.get(f"{self.url}?export=pdf")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'application/pdf')
@@ -104,7 +104,7 @@ class ReportSecurityTests(APITestCase):
     def test_export_format_csv_status_code(self):
         """Verifica que la solicitud de CSV devuelva el Content-Type correcto"""
         self.client.force_authenticate(user=self.admin)
-        response = self.client.get(self.url, {'format': 'csv'})
+        response = self.client.get(f"{self.url}?export=csv")
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'text/csv')

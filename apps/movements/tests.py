@@ -91,7 +91,7 @@ class MovementLogicTest(TestCase):
 
         # CAMBIO: Ajusta esta URL según tu apps/movements/urls.py
         # Si usas router.register(r'', MovementViewSet), la URL es esta:
-        url = "/movements/register/" 
+        url = "/api/movements/register/" 
         
         data = {
             "product": product.id,
@@ -158,7 +158,7 @@ class MovementLogicTest(TestCase):
         )
         product.save(created_by_user=self.user)
 
-        url = "/movements/register/" # Ajustado igual que arriba
+        url = "/api/movements/register/" # Ajustado igual que arriba
         data = {
             "product": product.id,
             "type": "OUT",

@@ -13,7 +13,7 @@ class MovementReportAPIView(APIView):
         end_date = request.query_params.get('end_date')
         m_type = request.query_params.get('type')
         inv_id = request.query_params.get('inventory_id')
-        format_type = request.query_params.get('format')
+        format_type = request.query_params.get('export')
 
         # Obtener data filtrada desde el servicio
         movements = ReportService.get_filtered_movements(
