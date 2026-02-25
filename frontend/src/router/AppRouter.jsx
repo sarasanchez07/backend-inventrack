@@ -5,6 +5,10 @@ import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 import AdminDashboard from '../pages/AdminDashboard';
 import PersonalDashboard from '../pages/PersonalDashboard';
+import CategoriesPage from '../pages/CategoriesPage';
+import ProductsPage from '../pages/ProductsPage';
+import MovementsPage from '../pages/MovementsPage';
+import ReportsPage from '../pages/ReportsPage';
 
 import ProtectedRoute from './ProtectedRoute';
 
@@ -39,6 +43,78 @@ const AppRouter = () => {
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <PersonalDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Categories Routes */}
+                <Route
+                    path="/categories"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin', 'maestro', 'jefe', 'estudiante']}>
+                            <CategoriesPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/inventory/:inventoryId/categories"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin', 'maestro', 'jefe', 'estudiante']}>
+                            <CategoriesPage />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Products Routes */}
+                <Route
+                    path="/products"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin', 'maestro', 'jefe', 'estudiante']}>
+                            <ProductsPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/inventory/:inventoryId/products"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin', 'maestro', 'jefe', 'estudiante']}>
+                            <ProductsPage />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Movements Routes */}
+                <Route
+                    path="/movements"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin', 'maestro', 'jefe', 'estudiante']}>
+                            <MovementsPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/inventory/:inventoryId/movements"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin', 'maestro', 'jefe', 'estudiante']}>
+                            <MovementsPage />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Reports Routes */}
+                <Route
+                    path="/reports"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin', 'maestro', 'jefe', 'estudiante']}>
+                            <ReportsPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/inventory/:inventoryId/reports"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin', 'maestro', 'jefe', 'estudiante']}>
+                            <ReportsPage />
                         </ProtectedRoute>
                     }
                 />

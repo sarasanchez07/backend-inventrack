@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import './DashboardLayout.css';
 
-const DashboardLayout = ({ children, role = 'admin', isSpecificView = false }) => {
+const DashboardLayout = ({ children, role = 'admin', isSpecificView = false, inventoryId = null }) => {
     const [collapsed, setCollapsed] = useState(false);
     const navigate = useNavigate();
 
@@ -25,14 +25,18 @@ const DashboardLayout = ({ children, role = 'admin', isSpecificView = false }) =
         navigate('/login');
     };
 
+    // Prefijo de ruta: si estamos dentro de un inventario específico,
+    // los links del sidebar deben ser contextuales a ese inventario
+    const inventoryPrefix = inventoryId ? `/inventory/${inventoryId}` : '';
+
     const navItems = [
-        { name: 'Dashboard', path: '/admin', icon: LayoutDashboard, roles: ['admin'] },
-        { name: 'Dashboard', path: '/personal', icon: LayoutDashboard, roles: ['personal', 'maestro', 'jefe', 'estudiante'] },
-        { name: 'Productos', path: '/products', icon: Package, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
-        { name: 'Categorias', path: '/categories', icon: Tags, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
-        { name: 'Reporte', path: '/reports', icon: BarChart3, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Dashboard', path: inventoryPrefix || '/admin', icon: LayoutDashboard, roles: ['admin'], noPrefix: true },
+        { name: 'Dashboard', path: inventoryPrefix || '/personal', icon: LayoutDashboard, roles: ['personal', 'maestro', 'jefe', 'estudiante'], noPrefix: true },
+        { name: 'Productos', path: `${inventoryPrefix}/products`, icon: Package, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Categorias', path: `${inventoryPrefix}/categories`, icon: Tags, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Reporte', path: `${inventoryPrefix}/reports`, icon: BarChart3, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
         { name: 'Personal', path: '/staff', icon: Users, roles: ['admin'] },
-        { name: 'Movimientos', path: '/movements', icon: ArrowRightLeft, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Movimientos', path: `${inventoryPrefix}/movements`, icon: ArrowRightLeft, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
         { name: 'Configuracion', path: '/settings', icon: Settings, roles: ['admin'] },
     ];
 

@@ -3,24 +3,26 @@ from apps.inventory.models import Category
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    inventory_name = serializers.ReadOnlyField(source='inventory.name')
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'inventory', 'created_at']
+        fields = ['id', 'name', 'inventory', 'inventory_name', 'created_at']
 
     def validate(self, attrs):
         """
-        Valida que la categoría pertenezca al inventario seleccionado.
+        Valida unicidad de nombre dentro del mismo inventario.
         """
-
-        category = attrs.get('category')
+        name = attrs.get('name')
         inventory = attrs.get('inventory')
 
-        # Solo validar si ambos vienen en el request
-        if category and inventory:
-            if category.inventory_id != inventory.id:
+        if name and inventory:
+            qs = Category.objects.filter(name__iexact=name, inventory=inventory)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
                 raise serializers.ValidationError(
-                    "La categoría no pertenece al inventario seleccionado."
+                    {"name": "Ya existe una categoría con ese nombre en este inventario."}
                 )
 
         return attrs

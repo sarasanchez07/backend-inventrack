@@ -1,12 +1,14 @@
+# apps/inventory/views/category_views.py
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from apps.inventory.models import Category
+from apps.inventory.models import Category, Product
 from apps.inventory.serializers.category_serializers import CategorySerializer
+from apps.inventory.serializers.product_serializers import ProductSerializer
 from django.shortcuts import get_object_or_404
 
-# apps/inventory/views/category_views.py
 
 class CategoryView(APIView):
     permission_classes = [IsAuthenticated]
@@ -15,23 +17,26 @@ class CategoryView(APIView):
         """Lista categorías con filtros para Admin y Personal"""
         user = request.user
         inventory_id = request.query_params.get('inventory_id')
-        inventory_name = request.query_params.get('inventory_name')
-        
+        search = request.query_params.get('search')
+
         # 1. El Admin puede ver TODO por defecto
         if user.role == 'admin':
             categories = Category.objects.all()
-            # Filtro por nombre de inventario (Nivel 1)
-            if inventory_name:
-                categories = categories.filter(inventory__name__icontains=inventory_name)
-        
         # 2. El Personal solo ve lo de sus inventarios asignados
         else:
-            categories = Category.objects.filter(inventory__in=user.assigned_inventories.all())
+            categories = Category.objects.filter(
+                inventory__in=user.assigned_inventories.all()
+            )
 
-        # Filtro adicional si el frontend manda un ID específico (Nivel 2)
+        # Filtro por inventario específico
         if inventory_id:
             categories = categories.filter(inventory_id=inventory_id)
 
+        # Filtro por nombre de categoría (búsqueda)
+        if search:
+            categories = categories.filter(name__icontains=search)
+
+        categories = categories.select_related('inventory').order_by('-created_at')
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
 
@@ -53,17 +58,23 @@ class CategoryView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class CategoryDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
         category = get_object_or_404(Category, pk=pk)
         user = request.user
-        
+
         # Validación de seguridad para PATCH
-        if user.role != 'admin' and not user.assigned_inventories.filter(id=category.inventory.id).exists():
-            return Response({"error": "No tienes permiso."}, status=status.HTTP_403_FORBIDDEN)
+        if user.role != 'admin' and not user.assigned_inventories.filter(
+            id=category.inventory.id
+        ).exists():
+            return Response(
+                {"error": "No tienes permiso."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         serializer = CategorySerializer(category, data=request.data, partial=True)
         if serializer.is_valid():
@@ -76,14 +87,50 @@ class CategoryDetailView(APIView):
         user = request.user
 
         # Seguridad para DELETE
-        if user.role != 'admin' and not user.assigned_inventories.filter(id=category.inventory.id).exists():
-            return Response({"error": "No tienes permiso."}, status=status.HTTP_403_FORBIDDEN)
-        
+        if user.role != 'admin' and not user.assigned_inventories.filter(
+            id=category.inventory.id
+        ).exists():
+            return Response(
+                {"error": "No tienes permiso."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         if category.products.exists():
             return Response(
                 {"error": "No puedes eliminar una categoría con productos registrados."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            
+
         category.delete()
-        return Response({"message": "Categoría eliminada."}, status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {"message": "Categoría eliminada."},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+
+class CategoryProductsView(APIView):
+    """Devuelve los productos que pertenecen a una categoría específica."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        category = get_object_or_404(Category, pk=pk)
+        user = request.user
+
+        # Validación: el personal solo puede ver si tiene asignado el inventario
+        if user.role != 'admin' and not user.assigned_inventories.filter(
+            id=category.inventory_id
+        ).exists():
+            return Response(
+                {"error": "No tienes permiso para ver esta categoría."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        products = Product.objects.filter(category=category).select_related(
+            'base_unit', 'presentation', 'category'
+        )
+        serializer = ProductSerializer(products, many=True)
+        return Response({
+            "category_name": category.name,
+            "inventory_name": category.inventory.name,
+            "products": serializer.data,
+        })
