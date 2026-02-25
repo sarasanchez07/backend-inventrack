@@ -33,10 +33,7 @@ const DashboardLayout = ({ children, role = 'admin', isSpecificView = false }) =
         { name: 'Reporte', path: '/reports', icon: BarChart3, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
         { name: 'Personal', path: '/staff', icon: Users, roles: ['admin'] },
         { name: 'Movimientos', path: '/movements', icon: ArrowRightLeft, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
-<<<<<<< HEAD
-=======
         { name: 'Configuracion', path: '/settings', icon: Settings, roles: ['admin'] },
->>>>>>> frontend/dashboard
     ];
 
     const filteredNavItems = navItems.filter(item => {
