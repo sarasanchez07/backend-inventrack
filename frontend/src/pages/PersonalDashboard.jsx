@@ -44,16 +44,23 @@ const PersonalDashboard = () => {
         : 'Inventario Asignado';
 
     const handleClose = () => {
+        console.log("Navigating back to admin dashboard...");
         navigate('/admin');
     };
 
     return (
-        <DashboardLayout role={user?.role || 'personal'}>
+        <DashboardLayout role={user?.role || 'personal'} isSpecificView={!!inventoryId}>
             <div className="page-header justify-between">
                 <h2 className="page-title">{loading ? 'Cargando...' : inventoryName}</h2>
-                {user?.role === 'admin' && (
-                    <button className="close-btn" onClick={handleClose}>
-                        <X size={20} color="#f38d31" />
+                {user?.role === 'admin' && inventoryId && (
+                    <button
+                        type="button"
+                        className="close-btn"
+                        onClick={handleClose}
+                        title="Volver al Inventario General"
+                        aria-label="Cerrar inventario específico"
+                    >
+                        <X size={20} color="#f38d31" strokeWidth={2.5} />
                     </button>
                 )}
             </div>

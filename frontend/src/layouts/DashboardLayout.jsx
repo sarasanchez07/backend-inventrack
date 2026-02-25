@@ -10,11 +10,12 @@ import {
     LogOut,
     ChevronLeft,
     ChevronRight,
-    Box
+    Box,
+    Settings
 } from 'lucide-react';
 import './DashboardLayout.css';
 
-const DashboardLayout = ({ children, role = 'admin' }) => {
+const DashboardLayout = ({ children, role = 'admin', isSpecificView = false }) => {
     const [collapsed, setCollapsed] = useState(false);
     const navigate = useNavigate();
 
@@ -32,9 +33,20 @@ const DashboardLayout = ({ children, role = 'admin' }) => {
         { name: 'Reporte', path: '/reports', icon: BarChart3, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
         { name: 'Personal', path: '/staff', icon: Users, roles: ['admin'] },
         { name: 'Movimientos', path: '/movements', icon: ArrowRightLeft, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+<<<<<<< HEAD
+=======
+        { name: 'Configuracion', path: '/settings', icon: Settings, roles: ['admin'] },
+>>>>>>> frontend/dashboard
     ];
 
-    const filteredNavItems = navItems.filter(item => item.roles.includes(role));
+    const filteredNavItems = navItems.filter(item => {
+        // Si estamos en vista específica (dentro de un inventario), 
+        // filtramos como si el rol fuera personal para todos.
+        if (isSpecificView) {
+            return item.roles.includes('personal') || item.roles.includes('estudiante') || item.roles.includes('jefe') || item.roles.includes('maestro');
+        }
+        return item.roles.includes(role);
+    });
 
     return (
         <div className="dashboard-container">
