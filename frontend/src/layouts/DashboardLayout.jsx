@@ -10,11 +10,12 @@ import {
     LogOut,
     ChevronLeft,
     ChevronRight,
-    Box
+    Box,
+    Settings
 } from 'lucide-react';
 import './DashboardLayout.css';
 
-const DashboardLayout = ({ children, role = 'admin' }) => {
+const DashboardLayout = ({ children, role = 'admin', isSpecificView = false }) => {
     const [collapsed, setCollapsed] = useState(false);
     const navigate = useNavigate();
 
@@ -26,15 +27,23 @@ const DashboardLayout = ({ children, role = 'admin' }) => {
 
     const navItems = [
         { name: 'Dashboard', path: '/admin', icon: LayoutDashboard, roles: ['admin'] },
-        { name: 'Dashboard', path: '/personal', icon: LayoutDashboard, roles: ['personal'] },
-        { name: 'Productos', path: '/products', icon: Package, roles: ['admin', 'personal'] },
-        { name: 'Categorias', path: '/categories', icon: Tags, roles: ['admin', 'personal'] },
-        { name: 'Reporte', path: '/reports', icon: BarChart3, roles: ['admin', 'personal'] },
+        { name: 'Dashboard', path: '/personal', icon: LayoutDashboard, roles: ['personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Productos', path: '/products', icon: Package, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Categorias', path: '/categories', icon: Tags, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Reporte', path: '/reports', icon: BarChart3, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
         { name: 'Personal', path: '/staff', icon: Users, roles: ['admin'] },
-        { name: 'Movimientos', path: '/movements', icon: ArrowRightLeft, roles: ['admin', 'personal'] },
+        { name: 'Movimientos', path: '/movements', icon: ArrowRightLeft, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Configuracion', path: '/settings', icon: Settings, roles: ['admin'] },
     ];
 
-    const filteredNavItems = navItems.filter(item => item.roles.includes(role));
+    const filteredNavItems = navItems.filter(item => {
+        // Si estamos en vista específica (dentro de un inventario), 
+        // filtramos como si el rol fuera personal para todos.
+        if (isSpecificView) {
+            return item.roles.includes('personal') || item.roles.includes('estudiante') || item.roles.includes('jefe') || item.roles.includes('maestro');
+        }
+        return item.roles.includes(role);
+    });
 
     return (
         <div className="dashboard-container">

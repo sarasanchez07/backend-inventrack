@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import './Dashboards.css';
 import { Sun, X } from 'lucide-react';
 import dashboardService from '../services/dashboardService';
+import { useAuth } from '../context/AuthContext';
 
 const PersonalDashboard = () => {
     const { inventoryId } = useParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
     const [stats, setStats] = useState({
         total_products: 0,
         total_movements: 0,
@@ -40,11 +43,26 @@ const PersonalDashboard = () => {
         ? `Inventario ${currentInventory.name}`
         : 'Inventario Asignado';
 
+    const handleClose = () => {
+        console.log("Navigating back to admin dashboard...");
+        navigate('/admin');
+    };
+
     return (
-        <DashboardLayout role="personal">
+        <DashboardLayout role={user?.role || 'personal'} isSpecificView={!!inventoryId}>
             <div className="page-header justify-between">
                 <h2 className="page-title">{loading ? 'Cargando...' : inventoryName}</h2>
-                <button className="close-btn"><X size={20} color="#f38d31" /></button>
+                {user?.role === 'admin' && inventoryId && (
+                    <button
+                        type="button"
+                        className="close-btn"
+                        onClick={handleClose}
+                        title="Volver al Inventario General"
+                        aria-label="Cerrar inventario específico"
+                    >
+                        <X size={20} color="#f38d31" strokeWidth={2.5} />
+                    </button>
+                )}
             </div>
 
             <div className="stats-grid">
