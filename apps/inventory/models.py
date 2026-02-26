@@ -63,6 +63,7 @@ class Category(models.Model):
     
 class Product(models.Model):
     name = models.CharField(max_length=100)
+    code = models.CharField(max_length=50, blank=True, null=True, unique=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
     created_by = models.ForeignKey(

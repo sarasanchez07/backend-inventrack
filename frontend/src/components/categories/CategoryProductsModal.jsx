@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import categoryService from '../services/categoryService';
+import categoryService from '../../services/categoryService';
 
 const CategoryProductsModal = ({ isOpen, onClose, category }) => {
     const [products, setProducts] = useState([]);

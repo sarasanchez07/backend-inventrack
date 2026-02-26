@@ -1,11 +1,11 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import DashboardLayout from '../layouts/DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
+import DashboardLayout from '../../layouts/DashboardLayout';
 import { X } from 'lucide-react';
-import './Dashboards.css';
+import '../dashboard/Dashboards.css';
 
-const ProductsPage = () => {
+const ReportsPage = () => {
     const { inventoryId } = useParams();
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -14,7 +14,7 @@ const ProductsPage = () => {
     return (
         <DashboardLayout role={user?.role || 'personal'} isSpecificView={!!inventoryId} inventoryId={inventoryId}>
             <div className="page-header justify-between">
-                <h2 className="page-title">Productos {inventoryId ? `del Inventario ${inventoryId}` : 'Generales'}</h2>
+                <h2 className="page-title">Reportes {inventoryId ? `del Inventario ${inventoryId}` : 'Generales'}</h2>
                 {isAdmin && inventoryId && (
                     <button
                         type="button"
@@ -27,10 +27,10 @@ const ProductsPage = () => {
                 )}
             </div>
             <div className="mt-8 text-center text-gray-500">
-                <p>Módulo de productos en desarrollo...</p>
+                <p>Módulo de reportes en desarrollo...</p>
             </div>
         </DashboardLayout>
     );
 };
 
-export default ProductsPage;
+export default ReportsPage;

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import DashboardLayout from '../layouts/DashboardLayout';
-import { useAuth } from '../context/AuthContext';
+import DashboardLayout from '../../layouts/DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
 import { Package, Folder, ArrowUpRight, ArrowDownLeft, Plus, X, Sun } from 'lucide-react';
 import './Dashboards.css';
-import dashboardService from '../services/dashboardService';
+import dashboardService from '../../services/dashboardService';
 
 const PersonalDashboard = () => {
     const { inventoryId } = useParams();

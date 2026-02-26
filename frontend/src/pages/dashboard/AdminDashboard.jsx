@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DashboardLayout from '../layouts/DashboardLayout';
-import CreateInventoryModal from '../components/CreateInventoryModal';
+import DashboardLayout from '../../layouts/DashboardLayout';
+import CreateInventoryModal from '../../components/inventory/CreateInventoryModal';
 import './Dashboards.css';
 import { Plus, Sun, ArrowRight, X } from 'lucide-react';
-import dashboardService from '../services/dashboardService';
+import dashboardService from '../../services/dashboardService';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();

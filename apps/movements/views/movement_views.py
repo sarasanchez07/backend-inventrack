@@ -158,11 +158,21 @@ class MovementListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        product_id = request.query_params.get('product_id')
+        inventory_id = request.query_params.get('inventory_id')
 
         if request.user.role == 'admin':
             movements = Movement.objects.all()
         else:
             movements = Movement.objects.filter(user=request.user)
+        
+        if product_id:
+            movements = movements.filter(product_id=product_id)
+        
+        if inventory_id:
+            movements = movements.filter(product__inventory_id=inventory_id)
+
+        movements = movements.order_by('-created_at')
 
         serializer = MovementSerializer(movements, many=True)
         return Response(serializer.data)

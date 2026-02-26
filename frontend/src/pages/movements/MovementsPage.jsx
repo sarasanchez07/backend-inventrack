@@ -1,9 +1,9 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import DashboardLayout from '../layouts/DashboardLayout';
+import { useAuth } from '../../context/AuthContext';
+import DashboardLayout from '../../layouts/DashboardLayout';
 import { X } from 'lucide-react';
-import './Dashboards.css';
+import '../dashboard/Dashboards.css';
 
 const MovementsPage = () => {
     const { inventoryId } = useParams();

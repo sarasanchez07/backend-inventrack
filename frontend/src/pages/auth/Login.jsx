@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import AuthLayout from '../layouts/AuthLayout';
+import AuthLayout from '../../layouts/AuthLayout';
 import './AuthPages.css';
 import { Mail, Lock, Loader2 } from 'lucide-react';
-import authService from '../services/authService';
-import { useAuth } from '../context/AuthContext';
+import authService from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
     const [email, setEmail] = useState('');

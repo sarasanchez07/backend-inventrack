@@ -52,20 +52,24 @@ class InventoryDetailView(APIView):
         inventory = get_object_or_404(Inventory, pk=pk)
 
         # Preparamos los datos legibles
-        unidades = [u.name for u in inventory.allowed_units.all()]
-        presentaciones = [p.name for p in inventory.allowed_presentations.all()]
+        unidades = [{"id": u.id, "name": u.name} for u in inventory.allowed_units.all()]
+        presentaciones = [{"id": p.id, "name": p.name} for p in inventory.allowed_presentations.all()]
 
         # Categorías vinculadas
         categorias = [{"id": c.id, "name": c.name} for c in inventory.categories.all()]
 
         return Response(
             {
+                "id": inventory.id,
+                "name": inventory.name,
                 "message": f"Bienvenido al inventario {inventory.name}",
                 "config": {
                     "tipo": inventory.get_selected_option_display(),
+                    "selected_option": inventory.selected_option,
                     "switches": {
                         "concentracion": inventory.has_concentration,
                         "presentacion": inventory.has_presentation,
+                        "cantidad_por_presentacion": inventory.has_quantity_per_presentation,
                         "vencimiento": inventory.has_expiration_date,
                     },
                     "catalogos": {

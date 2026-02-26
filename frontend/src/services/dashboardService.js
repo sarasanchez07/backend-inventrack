@@ -1,22 +1,17 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8000/api';
+import api from './api';
 
 const dashboardService = {
     getStats: async (inventoryId = null) => {
-        const token = localStorage.getItem('token');
         const params = inventoryId ? { inventory_id: inventoryId } : {};
-        const response = await axios.get(`${API_URL}/dashboard/stats/`, {
-            headers: { Authorization: `Bearer ${token}` },
-            params: params
-        });
+        const response = await api.get('/dashboard/stats/', { params });
+        return response.data;
+    },
+    getInventory: async (id) => {
+        const response = await api.get(`/inventory/${id}/`);
         return response.data;
     },
     createInventory: async (inventoryData) => {
-        const token = localStorage.getItem('token');
-        const response = await axios.post(`${API_URL}/inventory/create/`, inventoryData, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.post('/inventory/create/', inventoryData);
         return response.data;
     }
 };

@@ -28,6 +28,10 @@ class ProductListView(APIView):
         if search:
             products = products.filter(name__icontains=search)
 
+        category_id = request.query_params.get('category_id')
+        if category_id:
+            products = products.filter(category_id=category_id)
+
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 

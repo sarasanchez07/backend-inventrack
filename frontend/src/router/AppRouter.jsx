@@ -1,14 +1,14 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from '../pages/Login';
-import ForgotPassword from '../pages/ForgotPassword';
-import ResetPassword from '../pages/ResetPassword';
-import AdminDashboard from '../pages/AdminDashboard';
-import PersonalDashboard from '../pages/PersonalDashboard';
-import CategoriesPage from '../pages/CategoriesPage';
-import ProductsPage from '../pages/ProductsPage';
-import MovementsPage from '../pages/MovementsPage';
-import ReportsPage from '../pages/ReportsPage';
+import Login from '../pages/auth/Login';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
+import AdminDashboard from '../pages/dashboard/AdminDashboard';
+import PersonalDashboard from '../pages/dashboard/PersonalDashboard';
+import CategoriesPage from '../pages/categories/CategoriesPage';
+import ProductsPage from '../pages/products/ProductsPage';
+import MovementsPage from '../pages/movements/MovementsPage';
+import ReportsPage from '../pages/reports/ReportsPage';
 
 import ProtectedRoute from './ProtectedRoute';
 

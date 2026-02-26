@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import DashboardLayout from '../layouts/DashboardLayout';
-import CategoryFormModal from '../components/CategoryFormModal';
-import CategoryProductsModal from '../components/CategoryProductsModal';
-import categoryService from '../services/categoryService';
+import { useAuth } from '../../context/AuthContext';
+import DashboardLayout from '../../layouts/DashboardLayout';
+import CategoryFormModal from '../../components/categories/CategoryFormModal';
+import CategoryProductsModal from '../../components/categories/CategoryProductsModal';
+import categoryService from '../../services/categoryService';
 import { Plus, X } from 'lucide-react';
 import './CategoriesPage.css';
 
@@ -168,16 +168,14 @@ const CategoriesPage = () => {
                     </div>
 
                     <div className="categories-header-right">
-                        {/* Botón de registro: Se muestra si es personal O si es admin en vista específica */}
-                        {(!isAdmin || (isAdmin && inventoryId)) && (
-                            <button
-                                className="btn-register-category"
-                                onClick={handleOpenCreate}
-                            >
-                                <Plus size={16} />
-                                Registrar categoría
-                            </button>
-                        )}
+                        {/* Botón de registro: Se muestra para todos ahora para permitir flexibilidad al Admin */}
+                        <button
+                            className="btn-register-category"
+                            onClick={handleOpenCreate}
+                        >
+                            <Plus size={16} />
+                            Registrar categoría
+                        </button>
 
                         {/* Botón de cerrar (X) para el Admin cuando está en un inventario específico */}
                         {isAdmin && inventoryId && (
@@ -251,24 +249,18 @@ const CategoriesPage = () => {
                                         <td>{cat.inventory_name}</td>
                                         <td>
                                             <div className="action-buttons">
-                                                {/* Personal: Editar + Eliminar + Ver más */}
-                                                {/* Acciones: Editar + Eliminar (Se muestra para Personal O Admin en vista específica) */}
-                                                {(!isAdmin || (isAdmin && inventoryId)) && (
-                                                    <>
-                                                        <button
-                                                            className="btn-action btn-edit"
-                                                            onClick={() => handleOpenEdit(cat)}
-                                                        >
-                                                            Editar
-                                                        </button>
-                                                        <button
-                                                            className="btn-action btn-delete"
-                                                            onClick={() => handleDelete(cat)}
-                                                        >
-                                                            Eliminar
-                                                        </button>
-                                                    </>
-                                                )}
+                                                <button
+                                                    className="btn-action btn-edit"
+                                                    onClick={() => handleOpenEdit(cat)}
+                                                >
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    className="btn-action btn-delete"
+                                                    onClick={() => handleDelete(cat)}
+                                                >
+                                                    Eliminar
+                                                </button>
                                                 {/* Ambos: Ver más */}
                                                 <button
                                                     className="btn-action btn-view"

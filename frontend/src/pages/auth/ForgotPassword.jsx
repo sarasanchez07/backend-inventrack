@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import AuthLayout from '../layouts/AuthLayout';
+import AuthLayout from '../../layouts/AuthLayout';
 import './AuthPages.css';
 import { Mail } from 'lucide-react';
 

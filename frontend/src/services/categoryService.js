@@ -1,77 +1,33 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8000/api';
-
-const getAuthHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-});
+import api from './api';
 
 const categoryService = {
-    /**
-     * Lista categorías con filtros opcionales.
-     * @param {Object} params - { search, inventory_id }
-     */
     getCategories: async (params = {}) => {
-        const response = await axios.get(`${API_URL}/inventory/categories/`, {
-            headers: getAuthHeaders(),
-            params,
-        });
+        const response = await api.get('/inventory/categories/', { params });
         return response.data;
     },
 
-    /**
-     * Crea una nueva categoría.
-     * @param {Object} data - { name, inventory }
-     */
     createCategory: async (data) => {
-        const response = await axios.post(`${API_URL}/inventory/categories/`, data, {
-            headers: getAuthHeaders(),
-        });
+        const response = await api.post('/inventory/categories/', data);
         return response.data;
     },
 
-    /**
-     * Actualiza una categoría existente.
-     * @param {number} id - ID de la categoría
-     * @param {Object} data - { name }
-     */
     updateCategory: async (id, data) => {
-        const response = await axios.patch(`${API_URL}/inventory/categories/${id}/`, data, {
-            headers: getAuthHeaders(),
-        });
+        const response = await api.patch(`/inventory/categories/${id}/`, data);
         return response.data;
     },
 
-    /**
-     * Elimina una categoría.
-     * @param {number} id - ID de la categoría
-     */
     deleteCategory: async (id) => {
-        const response = await axios.delete(`${API_URL}/inventory/categories/${id}/`, {
-            headers: getAuthHeaders(),
-        });
+        const response = await api.delete(`/inventory/categories/${id}/`);
         return response.data;
     },
 
-    /**
-     * Obtiene los productos de una categoría.
-     * @param {number} categoryId
-     */
     getCategoryProducts: async (categoryId) => {
-        const response = await axios.get(
-            `${API_URL}/inventory/categories/${categoryId}/products/`,
-            { headers: getAuthHeaders() }
-        );
+        const response = await api.get(`/inventory/categories/${categoryId}/products/`);
         return response.data;
     },
 
-    /**
-     * Lista los inventarios disponibles para el usuario.
-     */
     getInventories: async () => {
-        const response = await axios.get(`${API_URL}/inventory/`, {
-            headers: getAuthHeaders(),
-        });
+        const response = await api.get('/inventory/');
         return response.data;
     },
 };

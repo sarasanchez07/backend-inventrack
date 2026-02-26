@@ -32,11 +32,11 @@ const DashboardLayout = ({ children, role = 'admin', isSpecificView = false, inv
     const navItems = [
         { name: 'Dashboard', path: inventoryPrefix || '/admin', icon: LayoutDashboard, roles: ['admin'], noPrefix: true },
         { name: 'Dashboard', path: inventoryPrefix || '/personal', icon: LayoutDashboard, roles: ['personal', 'maestro', 'jefe', 'estudiante'], noPrefix: true },
-        { name: 'Productos', path: `${inventoryPrefix}/products`, icon: Package, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
         { name: 'Categorias', path: `${inventoryPrefix}/categories`, icon: Tags, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Productos', path: `${inventoryPrefix}/products`, icon: Package, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
+        { name: 'Movimientos', path: `${inventoryPrefix}/movements`, icon: ArrowRightLeft, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
         { name: 'Reporte', path: `${inventoryPrefix}/reports`, icon: BarChart3, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
         { name: 'Personal', path: '/staff', icon: Users, roles: ['admin'] },
-        { name: 'Movimientos', path: `${inventoryPrefix}/movements`, icon: ArrowRightLeft, roles: ['admin', 'personal', 'maestro', 'jefe', 'estudiante'] },
         { name: 'Configuracion', path: '/settings', icon: Settings, roles: ['admin'] },
     ];
 

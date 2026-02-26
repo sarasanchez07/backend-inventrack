@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthLayout from '../layouts/AuthLayout';
+import AuthLayout from '../../layouts/AuthLayout';
 import './AuthPages.css';
 import { Lock } from 'lucide-react';
 
