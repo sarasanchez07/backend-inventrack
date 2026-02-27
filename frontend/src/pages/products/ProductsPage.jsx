@@ -139,7 +139,7 @@ const ProductsPage = () => {
                         <h1 className="products-title">
                             {inventoryId ? `Productos de ${currentInventoryName || 'Cargando...'}` : 'Tus Productos'}
                         </h1>
-                        {inventoryId && (
+                        {!isAdmin && (
                             <div className="products-subtitle">
                                 <strong>Registra a tus productos</strong>
                                 <span>Aquí puedes registrar tus productos de la mejor manera</span>
@@ -164,7 +164,7 @@ const ProductsPage = () => {
                     <h3 className="search-label">Buscar Productos</h3>
                     <div className="search-row">
                         <div className="search-input-wrapper">
-                            <Search className="search-icon" size={22} />
+                            <Search className="search-icon" size={20} />
                             <input
                                 type="text"
                                 placeholder="Busca un producto por su nombre..."
@@ -205,7 +205,8 @@ const ProductsPage = () => {
                                         presentacion</th>
                                     <th>Stock minimo</th>
                                     <th>Stock actual</th>
-                                    <th>Fecha vencimiento</th>
+                                    <th>Fecha 
+                                        vencimiento</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -222,7 +223,7 @@ const ProductsPage = () => {
                                         <td>{prod.category_name}</td>
                                         <td>{prod.presentation_name || '-'}</td>
                                         <td>{prod.unit_name}</td>
-                                        <td>{prod.quantity_per_presentation}</td>
+                                        <td className='cant_present'>{prod.quantity_per_presentation}</td>
                                         <td>
                                             {prod.stock_min_presentations} {prod.presentation_name || 'u'}
                                             <div className="unit-conversion">({prod.stock_min_presentations * prod.quantity_per_presentation} {prod.unit_name})</div>
@@ -233,7 +234,7 @@ const ProductsPage = () => {
                                                 <div className="unit-conversion">({prod.current_stock} {prod.unit_name})</div>
                                             </div>
                                         </td>
-                                        <td>{prod.expiration_date ? new Date(prod.expiration_date).toLocaleDateString() : '-'}</td>
+                                        <td className='cant_present'>{prod.expiration_date ? new Date(prod.expiration_date).toLocaleDateString() : '-'}</td>
                                         <td>
                                             <div className="action-btns">
                                                 {isAdmin && (
@@ -248,7 +249,7 @@ const ProductsPage = () => {
                         </table>
                     ) : (
                         <div className="empty-state">
-                            <Search size={48} />
+                            <Search size={40} />
                             <p>No se encontraron productos en este inventario.</p>
                         </div>
                     )}

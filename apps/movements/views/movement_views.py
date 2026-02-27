@@ -41,7 +41,8 @@ class MovementCreateView(APIView):
                     movement_type=serializer.validated_data["type"],
                     quantity=serializer.validated_data["quantity"],
                     unit_type=serializer.validated_data.get("unit_type", "BASE"),
-                    reason=serializer.validated_data.get("reason", "")
+                    reason=serializer.validated_data.get("reason", ""),
+                    notes=serializer.validated_data.get("notes", "")
                 )
 
                 return Response(
@@ -96,6 +97,7 @@ class MovementDetailView(APIView):
                     product=new_product,  # 👈 AHORA SÍ
                     quantity=serializer.validated_data.get("quantity"),
                     reason=serializer.validated_data.get("reason"),
+                    notes=serializer.validated_data.get("notes"),
                 )
 
                 movement.refresh_from_db()
@@ -160,6 +162,8 @@ class MovementListView(APIView):
     def get(self, request):
         product_id = request.query_params.get('product_id')
         inventory_id = request.query_params.get('inventory_id')
+        search_user = request.query_params.get('search_user')
+        movement_type = request.query_params.get('type')
 
         if request.user.role == 'admin':
             movements = Movement.objects.all()
@@ -171,6 +175,17 @@ class MovementListView(APIView):
         
         if inventory_id:
             movements = movements.filter(product__inventory_id=inventory_id)
+
+        if movement_type:
+            movements = movements.filter(type=movement_type)
+
+        if search_user:
+            from django.db.models import Q
+            movements = movements.filter(
+                Q(user__email__icontains=search_user) | 
+                Q(user__first_name__icontains=search_user) |
+                Q(user__last_name__icontains=search_user)
+            )
 
         movements = movements.order_by('-created_at')
 

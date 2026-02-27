@@ -24,7 +24,8 @@ class MovementService:
         movement_type,
         quantity,
         unit_type,
-        reason=""
+        reason="",
+        notes=""
     ):
 
         product = Product.objects.select_for_update().get(pk=product.pk)
@@ -56,6 +57,7 @@ class MovementService:
             quantity=quantity,
             unit_type=unit_type,
             reason=reason,
+            notes=notes,
         )
 
         movement._created_from_service = True
@@ -108,7 +110,7 @@ class MovementService:
 
     @staticmethod
     @transaction.atomic
-    def edit_movement(*, movement, user, product=None, quantity=None, reason=None):
+    def edit_movement(*, movement, user, product=None, quantity=None, reason=None, notes=None):
 
         movement = Movement.objects.select_for_update().get(pk=movement.pk)
 
@@ -181,6 +183,9 @@ class MovementService:
 
         if reason is not None:
             movement.reason = reason
+            
+        if notes is not None:
+            movement.notes = notes
 
         movement.edited_by = user
         movement.save()
