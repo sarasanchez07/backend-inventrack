@@ -215,7 +215,7 @@ const ProductsPage = () => {
                                     <tr key={prod.id}>
                                         <td className="col-name">
                                             <div className="prod-name-box">
-                                                <strong>{prod.name}</strong>
+                                                <h3>{prod.name}</h3>
                                                 {prod.concentration && <span>({prod.concentration})</span>}
                                                 <small>{prod.code}</small>
                                             </div>

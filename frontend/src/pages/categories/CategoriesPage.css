@@ -190,7 +190,6 @@
     background: var(--white);
     border: 1px solid var(--gray-200);
     border-radius: 12px;
-    padding: 1.25rem;
     box-shadow: var(--card-shadow);
     min-height: 200px;
 }
@@ -220,14 +219,14 @@
 
 .categories-table thead th:nth-child(2),
 .categories-table tbody td:nth-child(2) {
-    width: 35%;
+    width: 25%;
     text-align: left;
     /* Alineado a la izquierda para que no esté tan lejos */
 }
 
 .categories-table thead th:nth-child(3),
 .categories-table tbody td:nth-child(3) {
-    width: 40%;
+    width: 4%;
     text-align: center;
     /* Centrado para que la palabra coincida con los botones */
     padding-right: 1.5rem;

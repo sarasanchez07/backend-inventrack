@@ -173,18 +173,22 @@
 
 /* Table Section */
 .products-table-container {
-    background: #ffffff;
     border-radius: 20px;
     border: 1px solid #e2e8f0;
     overflow-x: auto;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    text-align: center;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+    border-bottom: 2px solid var(--gray-200);
 }
 
 .products-table {
     width: 100%;
     min-width: 1400px;
     border-collapse: collapse;
+    background: #ffff;
 }
 
 .cant_present {
@@ -192,46 +196,53 @@
 }
 
 .products-table th {
-    text-align: center;
-    padding: 14px 12px;
-    background-color: #f8fafc;
+    text-align: left;
+    padding: 1.25rem 1rem;
+    background-color: #fff;
     border-bottom: 2px solid #f1f5f9;
-    color: var(--gray-800);
+    color: var(--gray-700);
     font-weight: 700;
-    font-size: 14px;
-    text-transform: uppercase;
+    font-size: 0.9rem;;
     letter-spacing: 0.05em;
 }
 
-.products-table td {
-    padding: 24px;
+.products-table th:last-child,
+.products-table td:last-child {
+    text-align: center;
+}
+
+.products-table tbody td {
     border-bottom: 1px solid #f1f5f9;
-    color: #334155;
+    padding: 1.25rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--gray-800);
     vertical-align: middle;
 }
 
 .products-table tr:hover td {
-    background-color: #fcfcfc;
+    background-color: var(--gray-100);
 }
 
-.prod-name-box strong {
-    font-size: 17px;
-    font-weight: 600;
+.prod-name-box h3 {
+    font-size: 0.95rem;
+    font-weight: 400;
     color: var(--gray-800);
     display: block;
 }
 
 .prod-name-box span {
     color: #64748b;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .prod-name-box small {
     color: #f38d31;
-    font-weight: 800;
-    font-size: 11px;
+    font-weight: 700;
+    font-size: 10px;
     background: #fff7ed;
-    padding: 2px 10px;
+    padding: 2px 5px;
+    margin-left: 5px;
     border-radius: 6px;
     display: inline-block;
     margin-top: 8px;
@@ -251,8 +262,8 @@
     border: 1.5px solid #ffedd5;
     padding: 10px 20px;
     border-radius: 30px;
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 0.85rem;
+    font-weight: 600;
     width: 100px;
     cursor: pointer;
     transition: all 0.2s;
@@ -264,22 +275,20 @@
 }
 
 .btn-delete-row {
-    background: linear-gradient(135deg, #ff5e5e 0%, #ef4444 100%);
-    color: white;
-    border: none;
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1.5px solid #fee2e2 !important;;
     padding: 10px 20px;
     border-radius: 30px;
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 0.85rem;
+    font-weight: 600;
     width: 100px;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
 }
 
 .btn-delete-row:hover {
+    background: #fee2e2;
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
 }
 
 /* Modals */
@@ -604,7 +613,6 @@
     border: 1px solid #fee2e2;
     display: inline-block;
     white-space: nowrap;
-    text-align: left;
 }
 
 .modal-actions {

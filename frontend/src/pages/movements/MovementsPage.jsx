@@ -444,7 +444,7 @@ const MovementsPage = () => {
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <strong>{mov.product_name}</strong>
+                                                    <span>{mov.product_name}</span>
                                                 </td>
                                                 <td>
                                                     <span className={`badge-type ${mov.type === 'IN' ? 'badge-in' : 'badge-out'}`}>
@@ -466,11 +466,11 @@ const MovementsPage = () => {
                                                     <div className="admin-row-actions">
                                                         {mov.status !== 'Anulado' && (
                                                             <>
-                                                                <button className="btn-row-edit" onClick={() => handleEditMovement(mov)} title="Editar">
-                                                                    <Edit size={16} />
+                                                                <button className="admin-row-actions btn-row-edit" onClick={() => handleEditMovement(mov)} title="Editar">
+                                                                    Editar
                                                                 </button>
-                                                                <button className="btn-row-cancel" onClick={() => handleCancelMovementAction(mov.id)} title="Anular">
-                                                                    <Ban size={16} />
+                                                                <button className="admin-row-actions btn-row-cancel" onClick={() => handleCancelMovementAction(mov.id)} title="Anular">
+                                                                    Anular
                                                                 </button>
                                                             </>
                                                         )}
