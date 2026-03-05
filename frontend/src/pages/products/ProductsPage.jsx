@@ -131,6 +131,24 @@ const ProductsPage = () => {
         ? inventories.find(inv => inv.id.toString() === inventoryId)?.name
         : '';
 
+    const formatStock = (prod) => {
+        const baseStock = Number(prod.current_stock);
+        const perPresentation = Number(prod.quantity_per_presentation);
+
+        if (!perPresentation || perPresentation <= 0) {
+            return `${baseStock} ${prod.unit_name}`;
+        }
+
+        const presentations = Math.floor(baseStock / perPresentation);
+        const remainder = baseStock % perPresentation;
+
+        if (remainder > 0) {
+            return `${presentations} ${prod.presentation_name} + ${remainder} ${prod.unit_name}`;
+        }
+
+        return null; 
+    };
+
     return (
         <DashboardLayout role={user?.role || 'personal'} isSpecificView={!!inventoryId} inventoryId={inventoryId}>
             <div className="products-page">
@@ -229,9 +247,25 @@ const ProductsPage = () => {
                                             <div className="unit-conversion">({prod.stock_min_presentations * prod.quantity_per_presentation} {prod.unit_name})</div>
                                         </td>
                                         <td className="col-stock">
-                                            <div className={prod.current_stock <= (prod.stock_min_presentations * prod.quantity_per_presentation) ? 'low-stock' : ''}>
-                                                {Math.floor(prod.current_stock / prod.quantity_per_presentation)} {prod.presentation_name || 'u'}
-                                                <div className="unit-conversion">({prod.current_stock} {prod.unit_name})</div>
+                                            <div
+                                                className={
+                                                    prod.current_stock <=
+                                                    (prod.stock_min_presentations * prod.quantity_per_presentation)
+                                                        ? 'low-stock'
+                                                        : ''
+                                                }
+                                            >
+                                                {/* Línea principal (grande) */}
+                                                <div className="stock-main">
+                                                    {Math.floor(prod.current_stock / prod.quantity_per_presentation)} {prod.presentation_name || 'u'}
+                                                </div>
+
+                                                {/* Línea secundaria (gris y pequeña) */}
+                                                {formatStock(prod) && (
+                                                    <div className="stock-detail">
+                                                        ({formatStock(prod)})
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                         <td className='cant_present'>{prod.expiration_date ? new Date(prod.expiration_date).toLocaleDateString() : '-'}</td>

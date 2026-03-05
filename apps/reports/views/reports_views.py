@@ -13,6 +13,7 @@ class MovementReportAPIView(APIView):
         end_date = request.query_params.get('end_date')
         m_type = request.query_params.get('type')
         inv_id = request.query_params.get('inventory_id')
+        prod_id = request.query_params.get('product_id')
         format_type = request.query_params.get('export')
 
         # Obtener data filtrada desde el servicio
@@ -21,7 +22,8 @@ class MovementReportAPIView(APIView):
             start_date=start_date,
             end_date=end_date,
             movement_type=m_type,
-            inventory_id=inv_id
+            inventory_id=inv_id,
+            product_id=prod_id
         )
 
         # Manejar exportaciones

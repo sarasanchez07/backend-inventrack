@@ -37,8 +37,8 @@ const productService = {
         return response.data;
     },
 
-    getProductMovements: async (id) => {
-        const response = await api.get('/movements/', { params: { product_id: id } });
+    getProductMovements: async (id, params = {}) => {
+        const response = await api.get('/reports/movements/', { params: { ...params, product_id: id } });
         return response.data;
     }
 };

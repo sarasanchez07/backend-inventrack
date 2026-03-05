@@ -6,7 +6,7 @@ class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
     unit_name = serializers.ReadOnlyField(source='base_unit.name')
     presentation_name = serializers.ReadOnlyField(source='presentation.name')
-
+    stock_display = serializers.SerializerMethodField()
     display_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -15,12 +15,15 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'code', 'display_name', 'category', 'category_name', 'inventory',
             'concentration', 'base_unit', 'unit_name', 
             'presentation', 'presentation_name',
-            'expiration_date','quantity_per_presentation', 'stock_min_presentations','stock_initial_presentations', 'current_stock'
+            'expiration_date','quantity_per_presentation', 'stock_min_presentations','stock_initial_presentations', 'current_stock', 'stock_display'
         ]
         read_only_fields = ['current_stock', 'display_name']
 
     def get_display_name(self, obj):
         return str(obj)
+    
+    def get_stock_display(self, obj):
+        return obj.get_stock_display()
     
     def create(self, validated_data):
         # 1. Obtenemos el usuario desde el contexto del request (quien está logueado)

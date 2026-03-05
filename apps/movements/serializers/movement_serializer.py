@@ -10,12 +10,13 @@ class MovementSerializer(serializers.ModelSerializer):
     unit_name = serializers.ReadOnlyField(source='unit_name_at_time')
     edited_by = serializers.PrimaryKeyRelatedField(read_only=True)
     status = serializers.SerializerMethodField()
+    display_quantity = serializers.SerializerMethodField()
 
     class Meta:
         model = Movement
         fields = [
             'id', 'product', 'product_name', 'unit_name', 'user_name', 
-            'type', 'quantity', 'reason', 'notes', 'created_at', 'is_edited', 'original_quantity', 'edited_by','unit_name_at_time', 'status'
+            'type', 'quantity', 'reason', 'notes', 'created_at', 'is_edited', 'original_quantity', 'edited_by','unit_name_at_time', 'status','unit_type', 'display_quantity',
         ]
         read_only_fields = ['user', 'is_edited', 'original_quantity', 'edited_by']
     
@@ -39,6 +40,26 @@ class MovementSerializer(serializers.ModelSerializer):
         if not obj.product:
             return "Inactivo"
         return "Activo"
+    
+    def get_display_quantity(self, obj):
+
+        # PRESENTACIÓN
+        if obj.unit_type == "PRESENTATION":
+
+            if obj.product:
+                # intenta obtener el nombre real del campo
+                presentation = getattr(obj.product, "presentation", None)
+
+                if presentation:
+                    return f"{obj.quantity} {presentation}"
+
+            return f"{obj.quantity} Presentación"
+
+        # BASE
+        if obj.product and obj.product.base_unit:
+            return f"{obj.quantity} {obj.product.base_unit.name}"
+
+        return f"{obj.quantity}"
     
     def validate(self, data):
         """

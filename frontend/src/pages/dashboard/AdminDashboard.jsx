@@ -5,6 +5,8 @@ import CreateInventoryModal from '../../components/inventory/CreateInventoryModa
 import './Dashboards.css';
 import { Plus, Sun, ArrowRight, X } from 'lucide-react';
 import dashboardService from '../../services/dashboardService';
+import alertService from '../../services/alertService';
+import AlertModal from '../../components/alerts/AlertModal';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -13,31 +15,38 @@ const AdminDashboard = () => {
         total_movements: 0,
         inventories: []
     });
+    const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
-    const fetchStats = async () => {
+    const fetchData = async () => {
+        setLoading(true);
         try {
-            const data = await dashboardService.getStats();
-            setStats(data);
+            const [statsData, alertsData] = await Promise.all([
+                dashboardService.getStats(),
+                alertService.getAlerts()
+            ]);
+            setStats(statsData);
+            setAlerts(alertsData);
         } catch (error) {
-            console.error("Error fetching stats:", error);
+            console.error("Error fetching data:", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchStats();
+        fetchData();
     }, []);
 
     const handleCreateInventory = async (formData) => {
         try {
             await dashboardService.createInventory(formData);
             setIsModalOpen(false);
-            fetchStats(); // Refresh list
+            fetchData();
         } catch (error) {
-            const message = error.response?.data?.detail || error.response?.data?.error || "Error al crear el inventario. Asegúrate de que el nombre sea único.";
+            const message = error.response?.data?.detail || error.response?.data?.error || "Error al crear el inventario.";
             alert(message);
         }
     };
@@ -46,9 +55,8 @@ const AdminDashboard = () => {
         navigate(`/inventory/${id}`);
     };
 
-    // Formatear fecha para mostrar (ej: 02/02/26)
     const formatDate = (dateString) => {
-        if (!dateString) return '02/02/26'; // Placeholder like in image
+        if (!dateString) return '02/02/26';
         const date = new Date(dateString);
         return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
     };
@@ -110,18 +118,16 @@ const AdminDashboard = () => {
                         ))
                     ) : (
                         <div className="empty-inventory">
-                            <div className="empty-illustration">
-                                <div className="illustration-placeholder">👷‍♂️📦</div>
-                            </div>
                             <p className="empty-text">No tienes Inventarios Registrados</p>
                         </div>
                     )}
                 </div>
             </div>
 
-            <button className="btn-alerts">
+            <button className="btn-alerts" onClick={() => setIsAlertModalOpen(true)}>
                 <Sun size={18} />
                 Ver Alertas de Stock
+                {alerts.length > 0 && <span className="alert-dot"></span>}
             </button>
 
             <CreateInventoryModal
@@ -129,8 +135,16 @@ const AdminDashboard = () => {
                 onClose={() => setIsModalOpen(false)}
                 onCreate={handleCreateInventory}
             />
+
+            <AlertModal
+                isOpen={isAlertModalOpen}
+                onClose={() => setIsAlertModalOpen(false)}
+                alerts={alerts}
+                onRefresh={fetchData}
+            />
         </DashboardLayout>
     );
 };
 
 export default AdminDashboard;
+

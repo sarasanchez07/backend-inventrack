@@ -136,6 +136,21 @@
     font-weight: 700;
     font-size: 0.95rem;
     box-shadow: 0 2px 4px rgba(243, 141, 49, 0.2);
+    position: relative;
+    border: none;
+    cursor: pointer;
+}
+
+.alert-dot {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 14px;
+    height: 14px;
+    background: #ef4444;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .close-btn {

@@ -29,7 +29,16 @@ class MovementService:
     ):
 
         product = Product.objects.select_for_update().get(pk=product.pk)
-        real_quantity = Decimal(str(quantity))
+        raw_quantity = Decimal(str(quantity))
+
+        real_quantity = product.convert_to_base_unit(
+            raw_quantity,
+            is_presentation=(unit_type == "PRESENTATION")
+        )
+
+        print("UNIT TYPE:", unit_type)
+        print("RAW:", raw_quantity)
+        print("REAL:", real_quantity)
 
         if real_quantity <= 0:
             raise ValidationError("La cantidad debe ser mayor a 0.")
@@ -104,9 +113,10 @@ class MovementService:
             reason="Carga inicial de inventario",
             is_initial=True,
         )
-
         movement._created_from_service = True
         movement.save()
+
+        
 
     @staticmethod
     @transaction.atomic
@@ -119,7 +129,12 @@ class MovementService:
     
         original_product = Product.objects.select_for_update().get(pk=movement.product.pk)
 
-        old_qty = Decimal(str(movement.quantity))
+        old_raw_qty = Decimal(str(movement.quantity))
+
+        old_real_qty = movement.product.convert_to_base_unit(
+            old_raw_qty,
+            is_presentation=(movement.unit_type == "PRESENTATION")
+        )
         movement_type = movement.type
 
         # CASO 1: CAMBIO DE PRODUCTO
@@ -129,17 +144,17 @@ class MovementService:
 
             # 1️Revertir impacto del producto original
             if movement_type == "OUT":
-                original_product.current_stock = F("current_stock") + old_qty
+                original_product.current_stock = F("current_stock") + old_real_qty
             else:
-                original_product.current_stock = F("current_stock") - old_qty
+                original_product.current_stock = F("current_stock") - old_real_qty
 
             original_product.save(update_fields=["current_stock"])
 
             # 2️ Aplicar impacto al nuevo producto
             if movement_type == "OUT":
-                new_product.current_stock = F("current_stock") - old_qty
+                new_product.current_stock = F("current_stock") - old_real_qty
             else:
-                new_product.current_stock = F("current_stock") + old_qty
+                new_product.current_stock = F("current_stock") + old_real_qty
 
             new_product.save(update_fields=["current_stock"])
 
@@ -149,36 +164,41 @@ class MovementService:
         # CASO 2: CAMBIO DE CANTIDAD
         if quantity is not None:
 
-            new_qty = Decimal(str(quantity))
+            new_raw_qty = Decimal(str(quantity))
 
-            if new_qty <= 0:
+            new_real_qty = movement.product.convert_to_base_unit(
+                new_raw_qty,
+                is_presentation=(movement.unit_type == "PRESENTATION")
+            )
+
+            if new_real_qty <= 0:
                 raise ValidationError("La cantidad debe ser mayor a 0.")
 
             # 1️⃣ Restaurar efecto anterior
             if movement_type == "OUT":
-                original_product.current_stock += old_qty
+                original_product.current_stock += old_real_qty
             else:
-                original_product.current_stock -= old_qty
+                original_product.current_stock -= old_real_qty
 
             original_product.refresh_from_db()
 
             # 2️⃣ Validar nuevo impacto
             if movement_type == "OUT":
-                if original_product.current_stock < new_qty:
+                if original_product.current_stock < new_real_qty:
                     raise ValidationError(
                         "No hay stock suficiente para esta modificación."
                     )
-                original_product.current_stock -= new_qty
+                original_product.current_stock -= new_real_qty
             else:
-                original_product.current_stock += new_qty
+                original_product.current_stock += new_real_qty
 
             original_product.save(update_fields=["current_stock"])
 
-            movement.quantity = new_qty
+            movement.quantity = new_raw_qty
 
         # Auditoría
         if not movement.is_edited:
-            movement.original_quantity = old_qty
+            movement.original_quantity = old_real_qty
             movement.is_edited = True
 
         if reason is not None:

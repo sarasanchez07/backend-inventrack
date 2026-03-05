@@ -81,3 +81,25 @@ class InventoryDetailView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+    def patch(self, request, pk):
+        """Actualiza la configuración del inventario (Admin solamente)."""
+        if request.user.role != 'admin':
+            return Response({"error": "No tienes permiso."}, status=status.HTTP_403_FORBIDDEN)
+            
+        inventory = get_object_or_404(Inventory, pk=pk)
+        
+        updated_inventory = InventoryService.update_inventory_config(inventory, request.data)
+        
+        # Reutilizamos la lógica del GET para devolver el objeto completo actualizado
+        return self.get(request, pk)
+
+    def delete(self, request, pk):
+        """Elimina un inventario (Admin solamente)."""
+        if request.user.role != 'admin':
+            return Response({"error": "No tienes permiso."}, status=status.HTTP_403_FORBIDDEN)
+            
+        inventory = get_object_or_404(Inventory, pk=pk)
+        inventory.delete()
+        
+        return Response({"message": "Inventario eliminado correctamente."}, status=status.HTTP_204_NO_CONTENT)

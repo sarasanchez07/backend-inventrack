@@ -4,20 +4,30 @@ from apps.authentication.models.user import User
 
 User = get_user_model()
 
+class PersonnelSerializer(serializers.ModelSerializer):
+    assigned_inventories = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'email', 'role', 'assigned_inventories']
+
 class PersonnelCreateSerializer(serializers.ModelSerializer):
-    # Campo para recibir la lista de IDs de inventarios del formulario
     assigned_inventories = serializers.ListField(
         child=serializers.IntegerField(), 
         write_only=True,
         required=False
     )
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
         fields = ['id', 'first_name', 'email', 'password', 'role', 'assigned_inventories']
 
     def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Este correo ya está registrado.")
+        if self.instance:
+            if User.objects.filter(email=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError("Este correo ya está registrado.")
+        else:
+            if User.objects.filter(email=value).exists():
+                raise serializers.ValidationError("Este correo ya está registrado.")
         return value

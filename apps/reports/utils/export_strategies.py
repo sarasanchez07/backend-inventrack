@@ -11,10 +11,14 @@ class CSVExportStrategy(ExportStrategy):
     def export(self, queryset, filename):
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
-        writer = csv.writer(response)
+        response.write('\ufeff') # Agrega BOM para que Excel detecte UTF-8
+        writer = csv.writer(response, delimiter=';')
         writer.writerow(['Fecha', 'Producto', 'Inventario', 'Tipo', 'Cantidad', 'Motivo', 'Personal'])
         for m in queryset:
-            writer.writerow([m.created_at, m.product_name_at_time, m.product.inventory.name, m.type, m.quantity, m.reason, m.user.email])
+            inv_name = m.product.inventory.name if m.product and hasattr(m.product, 'inventory') and m.product.inventory else "N/A"
+            movement_type = "Entrada" if m.type == "IN" else "Salida"
+            date_formatted = m.created_at.strftime('%d/%m/%Y')
+            writer.writerow([date_formatted, m.product_name_at_time, inv_name, movement_type, m.quantity, m.reason, m.user.email])
         return response
 
 class PDFExportStrategy(ExportStrategy):

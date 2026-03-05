@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
-import { Package, Folder, ArrowUpRight, ArrowDownLeft, Plus, X, Sun } from 'lucide-react';
+import { Sun, X } from 'lucide-react';
 import './Dashboards.css';
 import dashboardService from '../../services/dashboardService';
+import alertService from '../../services/alertService';
+import AlertModal from '../../components/alerts/AlertModal';
 
 const PersonalDashboard = () => {
     const { inventoryId } = useParams();
@@ -15,23 +17,30 @@ const PersonalDashboard = () => {
         total_movements: 0,
         inventories: []
     });
+    const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [statsData, alertsData] = await Promise.all([
+                dashboardService.getStats(inventoryId),
+                alertService.getAlerts()
+            ]);
+            setStats(statsData);
+            setAlerts(alertsData);
+        } catch (error) {
+            console.error("Error fetching context data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const data = await dashboardService.getStats(inventoryId);
-                setStats(data);
-            } catch (error) {
-                console.error("Error fetching stats:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchStats();
+        fetchData();
     }, [inventoryId]);
 
-    // Obtenemos el nombre del inventario específico o el primero asignado
     let currentInventory = null;
     if (inventoryId) {
         currentInventory = stats.inventories.find(inv => inv.id.toString() === inventoryId);
@@ -81,13 +90,22 @@ const PersonalDashboard = () => {
             </div>
 
             <div className="mt-4">
-                <button className="btn-alerts">
+                <button className="btn-alerts" onClick={() => setIsAlertModalOpen(true)}>
                     <Sun size={18} />
                     Ver Alertas de Stock
+                    {alerts.length > 0 && <span className="alert-dot"></span>}
                 </button>
             </div>
+
+            <AlertModal
+                isOpen={isAlertModalOpen}
+                onClose={() => setIsAlertModalOpen(false)}
+                alerts={alerts}
+                onRefresh={fetchData}
+            />
         </DashboardLayout>
     );
 };
 
 export default PersonalDashboard;
+

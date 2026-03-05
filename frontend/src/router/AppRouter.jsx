@@ -9,6 +9,8 @@ import CategoriesPage from '../pages/categories/CategoriesPage';
 import ProductsPage from '../pages/products/ProductsPage';
 import MovementsPage from '../pages/movements/MovementsPage';
 import ReportsPage from '../pages/reports/ReportsPage';
+import StaffPage from '../pages/staff/StaffPage';
+import ConfigPage from '../pages/settings/ConfigPage';
 
 import ProtectedRoute from './ProtectedRoute';
 
@@ -115,6 +117,26 @@ const AppRouter = () => {
                     element={
                         <ProtectedRoute allowedRoles={['admin', 'maestro', 'jefe', 'estudiante']}>
                             <ReportsPage />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Staff Routes */}
+                <Route
+                    path="/staff"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <StaffPage />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Settings Routes */}
+                <Route
+                    path="/settings"
+                    element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <ConfigPage />
                         </ProtectedRoute>
                     }
                 />

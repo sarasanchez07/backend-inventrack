@@ -1,62 +1,57 @@
 from django.utils import timezone
 from datetime import timedelta
 from apps.inventory.models import Product
-from ..models import Alert
-from django.db.models import Q
+from django.db.models import F
 
 class AlertService:
     @staticmethod
-    def check_low_stock():
+    def get_dynamic_alerts(user):
         """
-        Escanea productos con stock por debajo del mínimo y genera alertas.
-        """
-        # Usamos el método has_low_stock del modelo Product si es eficiente,
-        # o hacemos una query optimizada.
-        products = Product.objects.all()
-        alerts_created = 0
-
-        for product in products:
-            if product.has_low_stock():
-                # Verificar si ya existe una alerta activa para este producto y tipo
-                if not Alert.objects.filter(product=product, type='LOW_STOCK', is_resolved=False).exists():
-                    Alert.objects.create(
-                        product=product,
-                        type='LOW_STOCK',
-                        message=f"El producto {product.name} tiene poco stock: {product.current_stock} unidades."
-                    )
-                    alerts_created += 1
-        return alerts_created
-
-    @staticmethod
-    def check_expirations(days_threshold=30):
-        """
-        Escanea productos por vencer en los próximos X días.
-        """
-        threshold_date = timezone.now().date() + timedelta(days=days_threshold)
-        
-        # Productos que tienen fecha de vencimiento y es próxima
-        products = Product.objects.filter(
-            expiration_date__lte=threshold_date,
-            expiration_date__gte=timezone.now().date(),
-            inventory__has_expiration_date=True
-        )
-        
-        alerts_created = 0
-        for product in products:
-            if not Alert.objects.filter(product=product, type='EXPIRATION', is_resolved=False).exists():
-                Alert.objects.create(
-                    product=product,
-                    type='EXPIRATION',
-                    message=f"El producto {product.name} vence el {product.expiration_date}."
-                )
-                alerts_created += 1
-        return alerts_created
-
-    @staticmethod
-    def get_active_alerts_for_user(user):
-        """
-        Retorna alertas de productos a los que el usuario tiene acceso.
+        Calcula alertas en tiempo real para el usuario:
+        1. Stock bajo
+        2. Vencimiento próximo (30 días)
         """
         from apps.inventory.permissions import InventoryPermissionService
         accessible_products = InventoryPermissionService.filter_products_for_user(user)
-        return Alert.objects.filter(product__in=accessible_products, is_resolved=False)
+        
+        alerts = []
+        today = timezone.now().date()
+        threshold_date = today + timedelta(days=30)
+        
+        # 1. Alertas de Stock Bajo
+        # Filtramos productos donde current_stock <= stock_min_presentations * quantity_per_presentation
+        low_stock_products = accessible_products.filter(
+            current_stock__lte=F('stock_min_presentations') * F('quantity_per_presentation')
+        ).select_related('inventory', 'base_unit')
+        
+        for p in low_stock_products:
+            alerts.append({
+                "product_id": p.id,
+                "product_name": p.name,
+                "current_stock": f"{p.current_stock} {p.base_unit.name if p.base_unit else ''}",
+                "reason": "Stock Bajo",
+                "type": "LOW_STOCK",
+                "inventory": p.inventory.name
+            })
+            
+        # 2. Alertas de Vencimiento
+        # Solo productos en inventarios que manejan vencimiento
+        expiring_products = accessible_products.filter(
+            inventory__has_expiration_date=True,
+            expiration_date__lte=threshold_date,
+            expiration_date__isnull=False
+        ).select_related('inventory', 'base_unit')
+        
+        for p in expiring_products:
+            # Evitar duplicados (si ya tiene stock bajo, mostramos ambas o priorizamos?)
+            # El usuario dice que salga el motivo, así que mostramos ambas si aplica
+            alerts.append({
+                "product_id": p.id,
+                "product_name": p.name,
+                "current_stock": f"{p.current_stock} {p.base_unit.name if p.base_unit else ''}",
+                "reason": f"Vence el {p.expiration_date.strftime('%d/%m/%Y')}",
+                "type": "EXPIRATION",
+                "inventory": p.inventory.name
+            })
+            
+        return alerts

@@ -115,17 +115,19 @@ class Product(models.Model):
 
     def get_stock_display(self):
 
-        if self.quantity_per_presentation == 0:
+        if not self.quantity_per_presentation or not self.presentation:
             return f"{self.current_stock} {self.base_unit.name}"
 
-        presentations = int(self.current_stock // self.quantity_per_presentation)
-        units = int(self.current_stock % self.quantity_per_presentation)
+        total_units = int(self.current_stock)
+        units_per_pres = int(self.quantity_per_presentation)
 
-        return (
-            f"{self.current_stock} {self.base_unit.name} "
-            f"({presentations} {self.presentation.name} "
-            f"+ {units} {self.base_unit.name})"
-        )
+        presentations = total_units // units_per_pres
+        remaining_units = total_units % units_per_pres
+
+        if remaining_units > 0:
+            return f"{presentations} {self.presentation.name} + {remaining_units} {self.base_unit.name}"
+        
+        return f"{presentations} {self.presentation.name}"
     
     def get_total_units(self):
         """

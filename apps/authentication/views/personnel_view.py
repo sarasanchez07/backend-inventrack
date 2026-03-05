@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from apps.authentication.serializers.personnel_serializer import PersonnelCreateSerializer
+from apps.authentication.serializers.personnel_serializer import PersonnelCreateSerializer, PersonnelSerializer
 from apps.authentication.services.personnel_service import PersonnelService
 from apps.authentication.permissions import IsAdminUser
 from django.shortcuts import get_object_or_404
@@ -11,7 +11,14 @@ from apps.authentication.models import User
 
 class PersonnelCreateView(APIView):
     permission_classes = [IsAdminUser]
-    serializer_class = PersonnelCreateSerializer # Solo Nivel 1 puede acceder
+    
+    def get(self, request):
+        if request.user.role != 'admin':
+            return Response({"error": "No tienes permiso."}, status=status.HTTP_403_FORBIDDEN)
+            
+        users = User.objects.exclude(id=request.user.id).exclude(role='admin').order_by('first_name')
+        serializer = PersonnelSerializer(users, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
         serializer = PersonnelCreateSerializer(data=request.data)
@@ -32,11 +39,32 @@ class UserDetailView(APIView):
             return Response({"error": "No tienes permiso para editar personal."}, status=status.HTTP_403_FORBIDDEN)
         
         user_to_edit = get_object_or_404(User, pk=pk)
-        serializer = PersonnelCreateSerializer(user_to_edit, data=request.data, partial=True)
+        
+        # Prepare data
+        data = request.data.copy()
+        inventories = data.pop('assigned_inventories', None)
+        password = data.pop('password', None)
+        
+        serializer = PersonnelCreateSerializer(user_to_edit, data=data, partial=True)
         
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            user = serializer.save()
+            
+            if password:
+                user.set_password(password[0] if isinstance(password, list) else password)
+                user.save()
+                
+            if inventories is not None:
+                # Si llega como string vacio, o lista iteramos
+                if inventories == '' or inventories == []:
+                    user.assigned_inventories.clear()
+                else:
+                    if isinstance(inventories, list):
+                        user.assigned_inventories.set(inventories)
+                    else:
+                        user.assigned_inventories.set([inventories])
+
+            return Response(PersonnelSerializer(user).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):

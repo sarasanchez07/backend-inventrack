@@ -286,7 +286,6 @@ const MovementsPage = () => {
                             </div>
 
                             <div className="form-row">
-                                {isAdmin && (
                                     <div className="form-group w-third">
                                         <label>Unidad *</label>
                                         <select
@@ -299,7 +298,6 @@ const MovementsPage = () => {
                                             <option value="PRESENTATION">Presentación</option>
                                         </select>
                                     </div>
-                                )}
 
                                 <div className="form-group flex-1">
                                     <label>Motivo *</label>
@@ -312,20 +310,7 @@ const MovementsPage = () => {
                                         rows={2}
                                     />
                                 </div>
-
-                                {isAdmin && (
-                                    <div className="form-group flex-1">
-                                        <label>Notas</label>
-                                        <textarea
-                                            name="notes"
-                                            value={formData.notes}
-                                            onChange={handleInputChange}
-                                            placeholder="Notas adicionales..."
-                                            rows={2}
-                                        />
-                                    </div>
-                                )}
-
+                                
                                 <div className="form-group form-actions">
                                     {isEditing && (
                                         <button type="button" className="btn-form-cancel" onClick={handleCancelEdit}>
@@ -364,7 +349,7 @@ const MovementsPage = () => {
                                                 {recentMovement.type === 'IN' ? 'Entrada' : 'Salida'}
                                             </span>
                                         </td>
-                                        <td>{recentMovement.quantity} <span className="text-gray-500 text-xs">({recentMovement.unit_name})</span></td>
+                                        <td>{recentMovement.display_quantity} <span className="text-gray-500 text-xs">({recentMovement.unit_name})</span></td>
                                         <td>{recentMovement.reason}</td>
                                     </tr>
                                 </tbody>

@@ -55,3 +55,39 @@ class InventoryService:
             inventory.allowed_presentations.add(p_obj)
 
         return inventory
+
+    @staticmethod
+    def update_inventory_config(inventory, data):
+        """Actualiza la configuración del inventario (Nombre, Switches, Catálogos)."""
+        inventory.name = data.get('name', inventory.name)
+        inventory.description = data.get('description', inventory.description)
+        
+        # Actualizar switches
+        switches = data.get('switches', {})
+        inventory.has_concentration = switches.get('has_concentration', inventory.has_concentration)
+        inventory.has_presentation = switches.get('has_presentation', inventory.has_presentation)
+        inventory.has_quantity_per_presentation = switches.get('has_quantity_per_presentation', inventory.has_quantity_per_presentation)
+        inventory.has_expiration_date = switches.get('has_expiration_date', inventory.has_expiration_date)
+        
+        inventory.save()
+        
+        # Actualizar catálogos (Unidades y Presentaciones)
+        catalogos = data.get('catalogos', {})
+        
+        if 'unidades' in catalogos:
+            unidades_data = catalogos['unidades'] # Lista de strings
+            unit_ids = []
+            for u_name in unidades_data:
+                unit, _ = BaseUnit.objects.get_or_create(name=u_name)
+                unit_ids.append(unit.id)
+            inventory.allowed_units.set(unit_ids)
+            
+        if 'presentaciones' in catalogos:
+            pres_data = catalogos['presentaciones'] # Lista de strings
+            pres_ids = []
+            for p_name in pres_data:
+                p_obj, _ = Presentation.objects.get_or_create(name=p_name)
+                pres_ids.append(p_obj.id)
+            inventory.allowed_presentations.set(pres_ids)
+            
+        return inventory
