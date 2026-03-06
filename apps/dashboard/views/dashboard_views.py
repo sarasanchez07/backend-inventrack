@@ -42,13 +42,24 @@ class DashboardStatsView(APIView):
 
         inventory_data = []
         for inv in inventories:
-            # We use distinct count for products in this inventory
             inventory_data.append({
                 "id": inv.id,
                 "name": inv.name,
                 "description": inv.description,
                 "created_at": inv.created_at,
-                "products_count": inv.product_set.count() if hasattr(inv, 'product_set') else Product.objects.filter(inventory=inv).count()
+                "products_count": inv.product_set.count() if hasattr(inv, 'product_set') else Product.objects.filter(inventory=inv).count(),
+                "config": {
+                    "switches": {
+                        "concentracion": inv.has_concentration,
+                        "presentacion": inv.has_presentation,
+                        "cantidad_por_presentacion": inv.has_quantity_per_presentation,
+                        "vencimiento": inv.has_expiration_date,
+                    },
+                    "catalogos": {
+                        "unidades": [{"id": u.id, "name": u.name} for u in inv.allowed_units.all()],
+                        "presentaciones": [{"id": p.id, "name": p.name} for p in inv.allowed_presentations.all()],
+                    }
+                }
             })
 
         return Response({

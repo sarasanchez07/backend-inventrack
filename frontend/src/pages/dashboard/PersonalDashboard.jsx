@@ -26,7 +26,7 @@ const PersonalDashboard = () => {
         try {
             const [statsData, alertsData] = await Promise.all([
                 dashboardService.getStats(inventoryId),
-                alertService.getAlerts()
+                alertService.getAlerts(inventoryId)
             ]);
             setStats(statsData);
             setAlerts(alertsData);
@@ -57,7 +57,11 @@ const PersonalDashboard = () => {
     };
 
     return (
-        <DashboardLayout role={user?.role || 'personal'} isSpecificView={!!inventoryId} inventoryId={inventoryId}>
+        <DashboardLayout
+            role={user?.role || 'personal'}
+            isSpecificView={!!currentInventory}
+            inventoryId={inventoryId || currentInventory?.id?.toString()}
+        >
             <div className="page-header justify-between">
                 <h2 className="page-title">{loading ? 'Cargando...' : inventoryName}</h2>
                 {user?.role === 'admin' && inventoryId && (

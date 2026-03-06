@@ -8,11 +8,15 @@ class ReportMovementSerializer(serializers.ModelSerializer):
     stock_after_movement = serializers.SerializerMethodField()
     unit_name = serializers.SerializerMethodField()
 
+    display_quantity = serializers.SerializerMethodField()
+    display_stock = serializers.SerializerMethodField()
+
     class Meta:
         model = Movement
         fields = [
             'id', 'created_at', 'product_name', 'inventory_name', 'type', 
-            'quantity', 'unit_name', 'stock_after_movement', 'reason', 'user_full_name', 'notes', 'is_cancelled'
+            'quantity', 'unit_name', 'stock_after_movement', 'reason', 'user_full_name', 'notes', 'is_cancelled',
+            'display_quantity', 'display_stock'
         ]
 
     def get_product_name(self, obj):
@@ -38,3 +42,14 @@ class ReportMovementSerializer(serializers.ModelSerializer):
 
     def get_stock_after_movement(self, obj):
         return obj.product.current_stock if obj.product else "N/A"
+
+    def get_display_quantity(self, obj):
+        unit = self.get_unit_name(obj)
+        if obj.unit_type == 'PRESENTATION' and obj.product and obj.product.presentation:
+            return f"{obj.quantity} {obj.product.presentation.name}"
+        return f"{obj.quantity} {unit}"
+
+    def get_display_stock(self, obj):
+        if not obj.product:
+            return "N/A"
+        return obj.product.get_stock_display()

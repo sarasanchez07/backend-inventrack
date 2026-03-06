@@ -83,6 +83,13 @@ const ProductsPage = () => {
         fetchProducts();
     }, [fetchProducts]);
 
+    useEffect(() => {
+        // Redirigir a personal si no tiene ID d einventario pero tiene inventarios asignados
+        if (!isAdmin && !inventoryId && inventories.length > 0) {
+            navigate(`/inventory/${inventories[0].id}/products`, { replace: true });
+        }
+    }, [isAdmin, inventoryId, inventories, navigate]);
+
     const handleSearch = () => fetchProducts();
     const handleClear = () => {
         setSearchTerm('');
@@ -146,11 +153,20 @@ const ProductsPage = () => {
             return `${presentations} ${prod.presentation_name} + ${remainder} ${prod.unit_name}`;
         }
 
-        return null; 
+        return null;
     };
 
+    const activeInventoryId = inventoryId || (!isAdmin && inventories.length > 0 ? inventories[0].id : null);
+    const activeConfig = currentInventoryConfig.switches ? currentInventoryConfig : (inventories.length > 0 && !isAdmin ? inventories[0].config : {});
+    const modalUnits = activeConfig.catalogos?.unidades || units;
+    const modalPresentations = activeConfig.catalogos?.presentaciones || presentations;
+
     return (
-        <DashboardLayout role={user?.role || 'personal'} isSpecificView={!!inventoryId} inventoryId={inventoryId}>
+        <DashboardLayout
+            role={user?.role || 'personal'}
+            isSpecificView={!!activeInventoryId}
+            inventoryId={activeInventoryId}
+        >
             <div className="products-page">
                 <div className="products-header">
                     <div className="header-left">
@@ -223,7 +239,7 @@ const ProductsPage = () => {
                                         presentacion</th>
                                     <th>Stock minimo</th>
                                     <th>Stock actual</th>
-                                    <th>Fecha 
+                                    <th>Fecha
                                         vencimiento</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -250,7 +266,7 @@ const ProductsPage = () => {
                                             <div
                                                 className={
                                                     prod.current_stock <=
-                                                    (prod.stock_min_presentations * prod.quantity_per_presentation)
+                                                        (prod.stock_min_presentations * prod.quantity_per_presentation)
                                                         ? 'low-stock'
                                                         : ''
                                                 }
@@ -296,9 +312,9 @@ const ProductsPage = () => {
                 onSubmit={handleFormSubmit}
                 product={editingProduct}
                 categories={categories}
-                units={units}
-                presentations={presentations}
-                config={currentInventoryConfig}
+                units={modalUnits}
+                presentations={modalPresentations}
+                config={activeConfig}
             />
 
             {viewMovementsProduct && (

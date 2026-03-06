@@ -95,12 +95,6 @@ class CategoryDetailView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        if category.products.exists():
-            return Response(
-                {"error": "No puedes eliminar una categoría con productos registrados."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         category.delete()
         return Response(
             {"message": "Categoría eliminada."},

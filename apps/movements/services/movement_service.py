@@ -163,10 +163,8 @@ class MovementService:
 
         # CASO 2: CAMBIO DE CANTIDAD
         if quantity is not None:
-
             new_raw_qty = Decimal(str(quantity))
-
-            new_real_qty = movement.product.convert_to_base_unit(
+            new_real_qty = original_product.convert_to_base_unit(
                 new_raw_qty,
                 is_presentation=(movement.unit_type == "PRESENTATION")
             )
@@ -174,25 +172,28 @@ class MovementService:
             if new_real_qty <= 0:
                 raise ValidationError("La cantidad debe ser mayor a 0.")
 
-            # 1️⃣ Restaurar efecto anterior
+            # 1️⃣ Calcular la diferencia (Delta)
+            # Si es OUT: delta = vieja_cantidad - nueva_cantidad
+            # Ejemplo: Salió 4, ahora sale 7. Delta = 4 - 7 = -3. (Restamos 3 al stock)
+            # Ejemplo: Salió 10, ahora sale 2. Delta = 10 - 2 = +8. (Sumamos 8 al stock)
+            
+            # Si es IN: delta = nueva_cantidad - vieja_cantidad
+            # Ejemplo: Entró 5, ahora entra 8. Delta = 8 - 5 = +3. (Sumamos 3 al stock)
+            
             if movement_type == "OUT":
-                original_product.current_stock += old_real_qty
+                delta = old_real_qty - new_real_qty
             else:
-                original_product.current_stock -= old_real_qty
+                delta = new_real_qty - old_real_qty
 
+            # 2️⃣ Validar si el stock resultante sería negativo (solo para el neto)
             original_product.refresh_from_db()
+            if original_product.current_stock + delta < 0:
+                raise ValidationError(f"No se puede realizar esta modificación porque el stock quedaría en negativo. Disponible actual: {original_product.current_stock}, Ajuste necesario: {delta}")
 
-            # 2️⃣ Validar nuevo impacto
-            if movement_type == "OUT":
-                if original_product.current_stock < new_real_qty:
-                    raise ValidationError(
-                        "No hay stock suficiente para esta modificación."
-                    )
-                original_product.current_stock -= new_real_qty
-            else:
-                original_product.current_stock += new_real_qty
-
+            # 3️⃣ Aplicar el delta de una sola vez
+            original_product.current_stock = F("current_stock") + delta
             original_product.save(update_fields=["current_stock"])
+            original_product.refresh_from_db()
 
             movement.quantity = new_raw_qty
 

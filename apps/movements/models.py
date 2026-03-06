@@ -21,13 +21,14 @@ class Movement(models.Model):
         ('PRESENTATION', 'Presentación'),
     )
 
-    # SET_NULL para que el reporte no se rompa si borran un producto
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name='movements')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name='movements')
     # Guardamos el nombre del producto por si el objeto original se borra
     product_name_at_time = models.CharField(max_length=255, blank=True)
     # Guardamos LA CANTIDAD  del producto por si el objeto original se borra
     unit_name_at_time = models.CharField(max_length=50, blank=True, null=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    # Guardamos el nombre del usuario por si se borra de la DB
+    user_name_at_time = models.CharField(max_length=255, blank=True)
     type = models.CharField(max_length=3, choices=MOVEMENT_TYPES)
     unit_type = models.CharField(
         max_length=20,
@@ -78,6 +79,9 @@ class Movement(models.Model):
             if self.product.base_unit:
                 self.unit_name_at_time = self.product.base_unit.name
 
+        if self.user:
+            self.user_name_at_time = self.user.first_name if self.user.first_name else self.user.email
+
         self.full_clean()
 
         super().save(*args, **kwargs)
@@ -111,8 +115,8 @@ class Movement(models.Model):
 
     def clean(self):
 
-        if not self.product:
-            raise ValidationError("El movimiento debe tener un producto.")
+        if not self.product and not self.product_name_at_time:
+            raise ValidationError("El movimiento debe tener un producto o un registro histórico.")
 
         if self.quantity <= 0:
             raise ValidationError("La cantidad debe ser mayor a cero.")

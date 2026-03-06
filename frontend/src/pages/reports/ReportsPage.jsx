@@ -195,8 +195,8 @@ const ReportsPage = () => {
                                         <td>{report.product_name}</td>
                                         <td>{formatDate(report.created_at)}</td>
                                         <td>{report.type === 'IN' ? 'Entrada' : 'Salida'}</td>
-                                        <td>{parseFloat(report.quantity)} unidades</td>
-                                        <td>{report.stock_after_movement}u</td>
+                                        <td>{report.display_quantity}</td>
+                                        <td>{report.display_stock}</td>
                                         <td>{report.reason || 'N/A'}</td>
                                         <td>{report.notes || 'N/A'}</td>
                                         {isAdmin && <td>{report.user_full_name}</td>}

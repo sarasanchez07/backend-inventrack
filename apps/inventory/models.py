@@ -23,21 +23,20 @@ class Inventory(models.Model):
         (3, '(Unidades exactas) perfecto para objetos '),
         (4, 'Personalizado'),
     ]
+    
+    name = models.CharField(max_length=100, unique=True) # Nombre del inventario
+    description = models.TextField(blank=True) # Descripcion del inventario
+    created_at = models.DateTimeField(auto_now_add=True) # Fecha de creacion automatica
+    selected_option = models.IntegerField(choices=OPTION_CHOICES) # selector con las opciones de unidades
 
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    selected_option = models.IntegerField(choices=OPTION_CHOICES)
+    # checbox de configuración 
+    has_concentration = models.BooleanField(default=False) # El inventario va a tener concentracion en sus productos
+    has_presentation = models.BooleanField(default=False)   # El inventario va a tener presentaciones para sus productos
+    has_quantity_per_presentation = models.BooleanField(default=False) # Al tener presetacion el sistema activa eso de cantidad por presentacion
+    has_expiration_date = models.BooleanField(default=False) # Los productso de su inventario tiene fecha de vencimiento
 
-    # Switches de configuración (SRP: El inventario define su esquema)
-    has_concentration = models.BooleanField(default=False)
-    has_presentation = models.BooleanField(default=False)
-    has_quantity_per_presentation = models.BooleanField(default=False)
-    has_expiration_date = models.BooleanField(default=False)
-
-    # Relaciones para personalización (Nivel 1 - Configuración)
-    allowed_units = models.ManyToManyField(BaseUnit, blank=True)
-    allowed_presentations = models.ManyToManyField(Presentation, blank=True)
+    allowed_units = models.ManyToManyField(BaseUnit, blank=True) #Personalizar Unidades
+    allowed_presentations = models.ManyToManyField(Presentation, blank=True) #Personalizar Configuracion
 
     def __str__(self):
         return self.name
@@ -64,7 +63,8 @@ class Category(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=50, blank=True, null=True, unique=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
+    category_name_at_time = models.CharField(max_length=100, blank=True)
     inventory = models.ForeignKey(Inventory, on_delete=models.CASCADE)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -107,6 +107,10 @@ class Product(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        # Mantenemos registro histórico de la categoría
+        if self.category:
+            self.category_name_at_time = self.category.name
+
         # Capturamos el usuario si viene del Admin o un servicio
         created_by_user = kwargs.pop('created_by_user', None)
         if created_by_user:
@@ -114,9 +118,11 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def get_stock_display(self):
+        # Si no hay unidad base asignada, devolver solo el número
+        unit_name = self.base_unit.name if self.base_unit else "unidades"
 
         if not self.quantity_per_presentation or not self.presentation:
-            return f"{self.current_stock} {self.base_unit.name}"
+            return f"{self.current_stock} {unit_name}"
 
         total_units = int(self.current_stock)
         units_per_pres = int(self.quantity_per_presentation)
@@ -125,7 +131,7 @@ class Product(models.Model):
         remaining_units = total_units % units_per_pres
 
         if remaining_units > 0:
-            return f"{presentations} {self.presentation.name} + {remaining_units} {self.base_unit.name}"
+            return f"{presentations} {self.presentation.name} + {remaining_units} {unit_name}"
         
         return f"{presentations} {self.presentation.name}"
     

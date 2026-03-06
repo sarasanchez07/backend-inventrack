@@ -11,5 +11,6 @@ class AlertListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        alerts = AlertService.get_dynamic_alerts(request.user)
+        inventory_id = request.query_params.get('inventory_id')
+        alerts = AlertService.get_dynamic_alerts(request.user, inventory_id=inventory_id)
         return Response(alerts)

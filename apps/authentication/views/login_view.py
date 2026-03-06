@@ -7,13 +7,16 @@ from drf_spectacular.utils import extend_schema
 from apps.authentication.serializers.login_serializer import LoginSerializer
 
 class LoginView(APIView):
-    permission_classes = [AllowAny] # Cualquiera puede intentar loguearse
+    # Todos pueden intentar inciar sesion
+    permission_classes = [AllowAny] 
 
     @extend_schema(
-        request=LoginSerializer, # Esto hará que aparezca el cuerpo en Swagger
+        request=LoginSerializer,
         responses={200: LoginSerializer} 
     )
     def post(self, request):
+        #Pide el correo y la contraseña son las credenciales establecidas 
+        # si hace parte del personal sus credenciales son las que le da el admin
         email = request.data.get("email")
         password = request.data.get("password")
 
@@ -24,18 +27,17 @@ class LoginView(APIView):
             )
 
         try:
-            # Llamamos al servicio que ahora devuelve rol e inventarios
+            # Llamamos al servicio que ahora devuelve rol e inventarios para acceder al dashboard correcto
             data = AuthService.login(email=email, password=password)
             return Response(data, status=status.HTTP_200_OK)
         
         except ValueError as e:
-            # Captura el error de "Credenciales inválidas" del servicio
+            # menejo de errores "Credenciales inválidas" para ingresar al sistema
             return Response(
                 {"error": str(e)}, 
                 status=status.HTTP_401_UNAUTHORIZED
             )
         except Exception:
-            # Captura errores inesperados para que el servidor no "explote"
             return Response(
                 {"error": "Ocurrió un error inesperado en el servidor."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

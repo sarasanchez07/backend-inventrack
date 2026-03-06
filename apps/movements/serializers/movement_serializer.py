@@ -4,8 +4,8 @@ from rest_framework.exceptions import ValidationError
 from apps.movements.services.movement_service import MovementService
 
 class MovementSerializer(serializers.ModelSerializer):
-    user_name = serializers.ReadOnlyField(source='user.email')
-    product_name = serializers.ReadOnlyField(source='product.name')
+    user_name = serializers.SerializerMethodField()
+    product_name = serializers.SerializerMethodField()
     # Para mostrar la unidad base en la tabla
     unit_name = serializers.ReadOnlyField(source='unit_name_at_time')
     edited_by = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -17,9 +17,15 @@ class MovementSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'product', 'product_name', 'unit_name', 'user_name', 
             'type', 'quantity', 'reason', 'notes', 'created_at', 'is_edited', 'original_quantity', 'edited_by','unit_name_at_time', 'status','unit_type', 'display_quantity',
+            'user_name_at_time'
         ]
         read_only_fields = ['user', 'is_edited', 'original_quantity', 'edited_by']
     
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.first_name if obj.user.first_name else obj.user.email
+        return obj.user_name_at_time
+
     def get_product_name(self, obj):
         # Si el producto existe, devuelve su nombre actual, si no, el histórico
         return obj.product.name if obj.product else obj.product_name_at_time

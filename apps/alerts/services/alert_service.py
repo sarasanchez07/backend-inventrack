@@ -5,7 +5,7 @@ from django.db.models import F
 
 class AlertService:
     @staticmethod
-    def get_dynamic_alerts(user):
+    def get_dynamic_alerts(user, inventory_id=None):
         """
         Calcula alertas en tiempo real para el usuario:
         1. Stock bajo
@@ -13,6 +13,9 @@ class AlertService:
         """
         from apps.inventory.permissions import InventoryPermissionService
         accessible_products = InventoryPermissionService.filter_products_for_user(user)
+        
+        if inventory_id:
+            accessible_products = accessible_products.filter(inventory_id=inventory_id)
         
         alerts = []
         today = timezone.now().date()
