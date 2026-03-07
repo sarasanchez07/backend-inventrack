@@ -7,6 +7,8 @@ from ..serializers.movement_serializer import MovementSerializer
 from ..models import Movement
 from apps.movements.services.movement_service import MovementService
 
+from apps.authentication.permissions import IsAdminUser, IsAdminOrOwner
+
 class MovementCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -23,7 +25,7 @@ class MovementCreateView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # 🔐 Permisos
+        # Si es personal, validamos que tenga acceso al inventario del producto
         if user.role != 'admin':
             if not user.assigned_inventories.filter(id=product.inventory.id).exists():
                 return Response(
@@ -58,16 +60,12 @@ class MovementCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class MovementDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [IsAdminUser()]
+        return [IsAdminOrOwner()]
 
     def patch(self, request, pk):
-
-        if request.user.role != 'admin':
-            return Response(
-                {"error": "Solo el administrador puede editar."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         try:
             movement = Movement.objects.get(pk=pk)
         except Movement.DoesNotExist:
@@ -75,6 +73,9 @@ class MovementDetailView(APIView):
                 {"error": "Movimiento no encontrado."},
                 status=status.HTTP_404_NOT_FOUND
             )
+        
+        # Validamos objeto después de obtenerlo por si acaso (aunque get_permissions lo hace)
+        self.check_object_permissions(request, movement)
 
         serializer = MovementSerializer(
             movement,
@@ -120,17 +121,12 @@ class MovementDetailView(APIView):
         except Movement.DoesNotExist:
             return Response({"error": "Movimiento no encontrado."}, status=404)
         
-        if request.user.role != 'admin' and movement.user != request.user:
-            return Response(
-                {"error": "No tienes permiso para ver este movimiento."},
-                status=403
-            )
+        self.check_object_permissions(request, movement)
 
         serializer = MovementSerializer(movement)
         return Response(serializer.data)
 
     def delete(self, request, pk):
-
         try:
             movement = Movement.objects.get(pk=pk)
         except Movement.DoesNotExist:
@@ -138,6 +134,8 @@ class MovementDetailView(APIView):
                 {"error": "Movimiento no encontrado."},
                 status=404
             )
+        
+        self.check_object_permissions(request, movement)
 
         try:
             MovementService.cancel_movement(

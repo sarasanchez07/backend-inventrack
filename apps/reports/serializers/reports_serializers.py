@@ -41,6 +41,8 @@ class ReportMovementSerializer(serializers.ModelSerializer):
         return "N/A"
 
     def get_stock_after_movement(self, obj):
+        if obj.resulting_stock is not None:
+            return obj.resulting_stock
         return obj.product.current_stock if obj.product else "N/A"
 
     def get_display_quantity(self, obj):
@@ -52,4 +54,5 @@ class ReportMovementSerializer(serializers.ModelSerializer):
     def get_display_stock(self, obj):
         if not obj.product:
             return "N/A"
-        return obj.product.get_stock_display()
+        # Usamos el stock histórico si está disponible, de lo contrario el actual
+        return obj.product.get_stock_display(custom_stock=obj.resulting_stock)

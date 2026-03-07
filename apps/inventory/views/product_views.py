@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from apps.inventory.models import Product
 from apps.inventory.serializers.product_serializers import ProductSerializer
 from apps.inventory.services.product_services import ProductService
+from apps.authentication.permissions import IsAdminOrAssignedStaff
 from apps.inventory.permissions import InventoryPermissionService
 
 class ProductListView(APIView):
@@ -65,21 +66,12 @@ class ProductListView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class ProductDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrAssignedStaff]
 
     def patch(self, request, pk):
         """Para editar campos específicos como la presentación"""
         product = get_object_or_404(Product, pk=pk)
-        
-        # Validación de seguridad: solo personal asignado o admin
-        if not InventoryPermissionService.can_modify_product(
-            request.user,
-            product
-        ):
-            return Response(
-                {"error": "No tienes permiso"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        self.check_object_permissions(request, product)
 
         serializer = ProductSerializer(product, data=request.data, partial=True)
         if serializer.is_valid():
@@ -89,19 +81,7 @@ class ProductDetailView(APIView):
 
     def delete(self, request, pk):
         product = get_object_or_404(Product, pk=pk)
-        user = request.user
-
-        # Seguridad: Solo admin o personal asignado al inventario del producto
-        if not InventoryPermissionService.can_modify_product(
-            request.user,
-            product
-        ):
-            return Response(
-                {
-                    "error": "No tienes permiso para eliminar este producto."
-                },
-                status=status.HTTP_403_FORBIDDEN
-            )
+        self.check_object_permissions(request, product)
 
         product.delete()
         return Response({"message": "Producto eliminado"}, status=status.HTTP_204_NO_CONTENT)

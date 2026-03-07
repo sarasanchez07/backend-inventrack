@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from apps.inventory.models import Inventory
 from apps.inventory.services.inventory_services import InventoryService
 from apps.inventory.serializers import InventorySerializer
-from apps.authentication.permissions import IsAdminUser
+from apps.authentication.permissions import IsAdminUser, IsAdminOrAssignedStaff
 
 
 class InventoryCreateView(APIView):
@@ -37,19 +37,14 @@ class InventoryListView(APIView):
 
 # Vista para "ENTRAR" y ver el mensaje de bienvenida (Nivel 2)
 class InventoryDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method in ['PATCH', 'DELETE']:
+            return [IsAdminUser()]
+        return [IsAdminOrAssignedStaff()]
 
     def get(self, request, pk):
-        user = request.user
-
-        if user.role != 'admin' and not user.assigned_inventories.filter(id=pk).exists():
-            return Response(
-                {"error": "No tienes permiso para acceder a este inventario."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        # Buscamos el inventario por ID
         inventory = get_object_or_404(Inventory, pk=pk)
+        self.check_object_permissions(request, inventory)
 
         # Preparamos los datos legibles
         unidades = [{"id": u.id, "name": u.name} for u in inventory.allowed_units.all()]
@@ -84,9 +79,6 @@ class InventoryDetailView(APIView):
 
     def patch(self, request, pk):
         """Actualiza la configuración del inventario (Admin solamente)."""
-        if request.user.role != 'admin':
-            return Response({"error": "No tienes permiso."}, status=status.HTTP_403_FORBIDDEN)
-            
         inventory = get_object_or_404(Inventory, pk=pk)
         
         updated_inventory = InventoryService.update_inventory_config(inventory, request.data)
@@ -96,9 +88,6 @@ class InventoryDetailView(APIView):
 
     def delete(self, request, pk):
         """Elimina un inventario (Admin solamente)."""
-        if request.user.role != 'admin':
-            return Response({"error": "No tienes permiso."}, status=status.HTTP_403_FORBIDDEN)
-            
         inventory = get_object_or_404(Inventory, pk=pk)
         inventory.delete()
         

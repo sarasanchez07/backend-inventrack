@@ -117,14 +117,16 @@ class Product(models.Model):
             self.created_by = created_by_user
         super().save(*args, **kwargs)
 
-    def get_stock_display(self):
+    def get_stock_display(self, custom_stock=None):
         # Si no hay unidad base asignada, devolver solo el número
         unit_name = self.base_unit.name if self.base_unit else "unidades"
+        
+        stock_to_display = custom_stock if custom_stock is not None else self.current_stock
 
         if not self.quantity_per_presentation or not self.presentation:
-            return f"{self.current_stock} {unit_name}"
+            return f"{stock_to_display} {unit_name}"
 
-        total_units = int(self.current_stock)
+        total_units = int(stock_to_display)
         units_per_pres = int(self.quantity_per_presentation)
 
         presentations = total_units // units_per_pres

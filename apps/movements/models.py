@@ -44,6 +44,7 @@ class Movement(models.Model):
     notes = models.TextField(blank=True, null=True)
     is_edited = models.BooleanField(default=False)
     original_quantity = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    resulting_stock = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
 
     edited_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, 

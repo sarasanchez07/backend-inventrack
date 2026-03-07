@@ -13,9 +13,6 @@ class PersonnelCreateView(APIView):
     permission_classes = [IsAdminUser]
     
     def get(self, request):
-        if request.user.role != 'admin':
-            return Response({"error": "No tienes permiso."}, status=status.HTTP_403_FORBIDDEN)
-            
         users = User.objects.exclude(id=request.user.id).exclude(role='admin').order_by('first_name')
         serializer = PersonnelSerializer(users, many=True)
         return Response(serializer.data)
@@ -31,12 +28,10 @@ class PersonnelCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class UserDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def patch(self, request, pk):
         """Permite al Admin editar datos del personal"""
-        if request.user.role != 'admin':
-            return Response({"error": "No tienes permiso para editar personal."}, status=status.HTTP_403_FORBIDDEN)
         
         user_to_edit = get_object_or_404(User, pk=pk)
         
@@ -69,8 +64,6 @@ class UserDetailView(APIView):
 
     def delete(self, request, pk):
         """Permite al Admin eliminar un usuario de la fundación"""
-        if request.user.role != 'admin':
-            return Response({"error": "No tienes permiso para eliminar personal."}, status=status.HTTP_403_FORBIDDEN)
         
         user_to_delete = get_object_or_404(User, pk=pk)
         user_to_delete.delete()

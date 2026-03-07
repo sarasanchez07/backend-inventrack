@@ -70,6 +70,7 @@ class MovementService:
         )
 
         movement._created_from_service = True
+        movement.resulting_stock = product.current_stock
         movement.save()
 
         return movement
@@ -114,6 +115,7 @@ class MovementService:
             is_initial=True,
         )
         movement._created_from_service = True
+        movement.resulting_stock = product.current_stock
         movement.save()
 
         
@@ -209,6 +211,7 @@ class MovementService:
             movement.notes = notes
 
         movement.edited_by = user
+        movement.resulting_stock = original_product.current_stock
         movement.save()
 
         return movement
@@ -224,20 +227,19 @@ class MovementService:
         if movement.is_cancelled:
             raise ValidationError("El movimiento ya está anulado.")
 
-        qty = Decimal(str(movement.quantity))
+        # Convertimos la cantidad a unidad base para restaurar el stock correctamente
+        real_qty = product.convert_to_base_unit(
+            Decimal(str(movement.quantity)),
+            is_presentation=(movement.unit_type == "PRESENTATION")
+        )
 
-        #  Revertir impacto en stock
+        # Revertir impacto en stock
         if movement.type == "IN":
-            # Si fue una entrada, al anular restamos
-            if product.current_stock < qty:
-                raise ValidationError(
-                    "No se puede anular porque el stock quedaría negativo."
-                )
-            product.current_stock = F("current_stock") - qty
-
+            if product.current_stock < real_qty:
+                raise ValidationError("No se puede anular porque el stock quedaría negativo.")
+            product.current_stock = F("current_stock") - real_qty
         else:  # OUT
-            # Si fue una salida, al anular sumamos
-            product.current_stock = F("current_stock") + qty
+            product.current_stock = F("current_stock") + real_qty
 
         product.save(update_fields=["current_stock"])
         product.refresh_from_db()
@@ -245,7 +247,15 @@ class MovementService:
         movement.is_cancelled = True
         movement.cancelled_by = user
         movement.cancelled_at = timezone.now()
+        movement.resulting_stock = product.current_stock
+        
+        # Nota automática de anulación
+        note_msg = "MOVIMIENTO ANULADO"
+        if movement.notes:
+            movement.notes = f"{movement.notes} | {note_msg}"
+        else:
+            movement.notes = note_msg
 
-        movement.save(update_fields=["is_cancelled", "cancelled_by", "cancelled_at"])
+        movement.save(update_fields=["is_cancelled", "cancelled_by", "cancelled_at", "resulting_stock", "notes"])
 
         return movement
