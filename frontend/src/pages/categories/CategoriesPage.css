@@ -16,7 +16,7 @@
     align-items: center;
     /* Changed from flex-start to center */
     border-bottom: 2px solid var(--gray-200);
-    padding-bottom: 1rem;
+    padding-bottom: 0.5rem;
 }
 
 .categories-header-left {

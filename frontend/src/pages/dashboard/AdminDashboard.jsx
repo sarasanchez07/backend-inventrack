@@ -13,6 +13,10 @@ const AdminDashboard = () => {
     const [stats, setStats] = useState({
         total_products: 0,
         total_movements: 0,
+        low_stock_count: 0,
+        expiring_count: 0,
+        expiring_only_count: 0,
+        normal_stock_count: 0,
         inventories: []
     });
     const [alerts, setAlerts] = useState([]);
@@ -74,11 +78,33 @@ const AdminDashboard = () => {
                         <span className="stat-value">{stats.total_products}</span>
                     </div>
                     <div className="progress-bar-container">
-                        <div className="progress-bar" style={{ width: stats.total_products > 0 ? '100%' : '0%' }}></div>
+                        <div className="progress-bar-main">
+                            <div
+                                className="progress-segment low-stock"
+                                style={{ width: `${stats.total_products > 0 ? (stats.low_stock_count / stats.total_products) * 100 : 0}%` }}
+                                title={`Stock bajo: ${stats.low_stock_count}`}
+                            ></div>
+                            <div
+                                className="progress-segment expiring-soon"
+                                style={{ width: `${stats.total_products > 0 ? (stats.expiring_only_count / stats.total_products) * 100 : 0}%` }}
+                                title={`Vence pronto: ${stats.expiring_count}`}
+                            ></div>
+                            <div
+                                className="progress-segment normal-stock"
+                                style={{ width: `${stats.total_products > 0 ? (stats.normal_stock_count / stats.total_products) * 100 : 0}%` }}
+                                title={`Stock normal: ${stats.normal_stock_count}`}
+                            ></div>
+                        </div>
                         <div className="progress-legend">
-                            <span>Bajo stock</span>
-                            <span>Buen estado</span>
-                            <span>Stock bajo</span>
+                            <div className={`legend-item ${stats.low_stock_count === 0 ? 'zero-count' : ''}`}>
+                                <span className="dot low-stock"></span> Stock bajo
+                            </div>
+                            <div className={`legend-item ${stats.expiring_count === 0 ? 'zero-count' : ''}`}>
+                                <span className="dot expiring-soon"></span> Vence pronto
+                            </div>
+                            <div className={`legend-item ${stats.normal_stock_count === 0 ? 'zero-count' : ''}`}>
+                                <span className="dot normal-stock"></span> Stock normal
+                            </div>
                         </div>
                     </div>
                 </div>

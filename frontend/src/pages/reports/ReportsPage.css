@@ -1,7 +1,6 @@
 .reports-page {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
 }
 
 .reports-filters-section {
@@ -88,9 +87,9 @@
 }
 
 .reports-table-container {
-    border-radius: 12px;
-    border: 2px solid #60a5fa;
-    /* Blue border as shown in image */
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     overflow-x: auto;
     background: var(--white);
     min-height: 400px;
@@ -106,17 +105,20 @@
 .reports-table th {
     text-align: left;
     padding: 1.25rem 1rem;
-    border-bottom: 1px solid #e2e8f0;
-    color: var(--gray-800);
+    background-color: #fff;
+    border-bottom: 2px solid #f1f5f9;
+    color: var(--gray-700);
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
 }
 
 .reports-table td {
     border-bottom: 1px solid #f1f5f9;
     padding: 1.25rem 1rem;
     font-size: 0.95rem;
-    color: var(--gray-700);
+    font-weight: 400;
+    color: var(--gray-800);
     vertical-align: middle;
 }
 

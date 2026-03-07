@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from apps.inventory.models import Product, Inventory
 from apps.movements.models import Movement
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import F, Q
 from apps.inventory.permissions import InventoryPermissionService
 
 class DashboardStatsView(APIView):
@@ -62,9 +65,33 @@ class DashboardStatsView(APIView):
                 }
             })
 
+        # 3. Stock Status counts
+        today = timezone.now().date()
+        threshold_date = today + timedelta(days=30)
+
+        # Low stock (Priority 1)
+        low_stock_condition = Q(current_stock__lte=F('stock_min_presentations') * F('quantity_per_presentation'))
+        low_stock_count = products_qs.filter(low_stock_condition).count()
+
+        # Expiring soon (Priority 2: Expiring but NOT low stock for the segment width, 
+        # though usually users want the total expiring count)
+        expiring_condition = Q(inventory__has_expiration_date=True, expiration_date__lte=threshold_date, expiration_date__isnull=False)
+        
+        # This is for the bar segments
+        expiring_only_count = products_qs.filter(expiring_condition).exclude(low_stock_condition).count()
+        # This is for the total count if needed
+        total_expiring_count = products_qs.filter(expiring_condition).count()
+
+        # Normal stock
+        normal_stock_count = total_products - (low_stock_count + expiring_only_count)
+
         return Response({
             "total_products": total_products,
             "total_movements": total_movements,
+            "low_stock_count": low_stock_count,
+            "expiring_count": total_expiring_count,
+            "expiring_only_count": expiring_only_count,
+            "normal_stock_count": normal_stock_count,
             "inventories": inventory_data,
             "role": user.role
         })

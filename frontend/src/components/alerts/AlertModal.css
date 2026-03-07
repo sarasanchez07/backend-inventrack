@@ -39,13 +39,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 5px;
 }
 
 .alert-modal-title {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #1e293b;
+    color: #000;
     margin: 0;
 }
 
@@ -99,12 +99,12 @@
 }
 
 .reason-cell.low-stock {
-    background: #fef2f2;
+    background: #fff;
     color: #ef4444;
 }
 
 .reason-cell.expiration {
-    background: #fffbeb;
+    background: #fff;
     color: #d97706;
 }
 
@@ -121,7 +121,7 @@
 }
 
 .btn-correct {
-    background: #4f46e5;
+    background: var(--primary);
     color: white;
     border: none;
     padding: 6px 12px;
@@ -133,7 +133,7 @@
 }
 
 .btn-correct:hover {
-    background: #4338ca;
+    background: var(--primary-hover);
 }
 
 .correction-form {
@@ -145,18 +145,18 @@
 
 .correction-info {
     display: flex;
-    gap: 10px;
-    font-size: 1.1rem;
+    gap: 5px;
+    font-size: 0.98rem;
 }
 
 .correction-info .label {
-    font-weight: 700;
-    color: #64748b;
+    font-weight: 600;
+    color: #000;
 }
 
 .correction-info .value {
-    font-weight: 800;
-    color: #1e293b;
+    font-weight: 400;
+    color: #64748b;
 }
 
 .form-group {
@@ -167,11 +167,11 @@
 
 .form-group label {
     font-weight: 700;
-    color: #475569;
+    color: #000;
 }
 
 .modal-input {
-    padding: 12px;
+    padding: 10px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     font-size: 1rem;
@@ -181,24 +181,25 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 10px;
+    margin-top: 5px;
 }
 
 .btn-cancel {
     background: #f1f5f9;
     color: #475569;
     border: none;
-    padding: 10px 20px;
+    padding: 5px 20px;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
 }
 
 .btn-save-correction {
-    background: #10b981;
+    background:var(--primary);
     color: white;
     border: none;
-    padding: 10px 24px;
+    padding: 5px 18px;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
@@ -209,7 +210,7 @@
 }
 
 .btn-save-correction:hover:not(:disabled) {
-    background: #059669;
+    background: var(--primary-hover);
 }
 
 .btn-save-correction:disabled {

@@ -9,7 +9,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 25px;
+    padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--gray-200);
 }
 
@@ -615,10 +615,7 @@
 .low-stock {
     color: #ef4444;
     background: #fef2f2;
-    padding: 10px 16px;
-    border-radius: 12px;
     font-weight: 800;
-    border: 1px solid #fee2e2;
     display: inline-block;
     white-space: nowrap;
 }
