@@ -8,6 +8,7 @@ from ..models import Movement
 from apps.movements.services.movement_service import MovementService
 
 from apps.authentication.permissions import IsAdminUser, IsAdminOrOwner
+from apps.authentication.models.user import User
 
 class MovementCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -26,7 +27,7 @@ class MovementCreateView(APIView):
             )
 
         # Si es personal, validamos que tenga acceso al inventario del producto
-        if user.role != 'admin':
+        if user.role != User.Role.ADMIN:
             if not user.assigned_inventories.filter(id=product.inventory.id).exists():
                 return Response(
                     {"error": "No tienes permiso para este inventario."},
@@ -163,10 +164,13 @@ class MovementListView(APIView):
         search_user = request.query_params.get('search_user')
         movement_type = request.query_params.get('type')
 
-        if request.user.role == 'admin':
+        if request.user.role == User.Role.ADMIN:
             movements = Movement.objects.all()
         else:
-            movements = Movement.objects.filter(user=request.user)
+            # El personal ve los movimientos de sus inventarios asignados
+            movements = Movement.objects.filter(
+                product__inventory__in=request.user.assigned_inventories.all()
+            )
         
         if product_id:
             movements = movements.filter(product_id=product_id)

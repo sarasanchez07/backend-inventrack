@@ -7,6 +7,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import F, Q
 from apps.inventory.permissions import InventoryPermissionService
+from apps.authentication.models.user import User
 
 class DashboardStatsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -25,7 +26,7 @@ class DashboardStatsView(APIView):
             # Movements for this specific inventory
             movements_qs = Movement.objects.filter(product__inventory_id=inventory_id)
             # If not admin, ensure they have permission to see this inventory
-            if user.role != 'admin':
+            if user.role != User.Role.ADMIN:
                 if not user.assigned_inventories.filter(id=inventory_id).exists():
                      return Response({"error": "No tienes acceso a este inventario"}, status=403)
             
@@ -35,7 +36,7 @@ class DashboardStatsView(APIView):
             # 2. General Global/Assigned view
             total_products = products_qs.count()
             
-            if user.role == 'admin':
+            if user.role == User.Role.ADMIN:
                 total_movements = Movement.objects.count()
                 inventories = Inventory.objects.all()
             else:

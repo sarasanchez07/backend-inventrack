@@ -36,10 +36,6 @@ class MovementService:
             is_presentation=(unit_type == "PRESENTATION")
         )
 
-        print("UNIT TYPE:", unit_type)
-        print("RAW:", raw_quantity)
-        print("REAL:", real_quantity)
-
         if real_quantity <= 0:
             raise ValidationError("La cantidad debe ser mayor a 0.")
         

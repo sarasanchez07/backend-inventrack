@@ -1,9 +1,7 @@
 from django.test import TestCase
 from django.utils import timezone
 from datetime import timedelta
-from decimal import Decimal
 from apps.inventory.models import Inventory, Category, Product, BaseUnit
-from apps.alerts.models import Alert
 from apps.alerts.services.alert_service import AlertService
 from django.contrib.auth import get_user_model
 
@@ -25,9 +23,9 @@ class AlertSystemTest(TestCase):
             role=User.Role.ADMIN
         )
 
-    def test_low_stock_alert_generation(self):
-        # Producto con stock bajo (0 < 10)
-        product = Product.objects.create(
+    def test_low_stock_dynamic_alert(self):
+        # Producto con stock bajo (5 <= 10 * 1)
+        Product.objects.create(
             name="Bajo Stock",
             category=self.category,
             inventory=self.inventory,
@@ -37,16 +35,18 @@ class AlertSystemTest(TestCase):
             current_stock=5
         )
         
-        AlertService.check_low_stock()
+        alerts = AlertService.get_dynamic_alerts(self.user)
         
-        self.assertTrue(Alert.objects.filter(product=product, type='LOW_STOCK').exists())
-        alert = Alert.objects.get(product=product, type='LOW_STOCK')
-        self.assertIn("poco stock", alert.message)
+        # Debe haber al menos una alerta de tipo LOW_STOCK
+        low_stock_alerts = [a for a in alerts if a['type'] == 'LOW_STOCK']
+        self.assertTrue(len(low_stock_alerts) > 0)
+        self.assertEqual(low_stock_alerts[0]['product_name'], "Bajo Stock")
+        self.assertEqual(low_stock_alerts[0]['reason'], "Stock Bajo")
 
-    def test_expiration_alert_generation(self):
-        # Producto que vence en 15 días
+    def test_expiration_dynamic_alert(self):
+        # Producto que vence en 15 días (dentro del umbral de 30)
         expiry_date = timezone.now().date() + timedelta(days=15)
-        product = Product.objects.create(
+        Product.objects.create(
             name="Vence Pronto",
             category=self.category,
             inventory=self.inventory,
@@ -56,8 +56,30 @@ class AlertSystemTest(TestCase):
             current_stock=100
         )
         
-        AlertService.check_expirations(days_threshold=30)
+        alerts = AlertService.get_dynamic_alerts(self.user)
         
-        self.assertTrue(Alert.objects.filter(product=product, type='EXPIRATION').exists())
-        alert = Alert.objects.get(product=product, type='EXPIRATION')
-        self.assertIn("vence el", alert.message)
+        # Debe haber al menos una alerta de tipo EXPIRATION
+        expiration_alerts = [a for a in alerts if a['type'] == 'EXPIRATION']
+        self.assertTrue(len(expiration_alerts) > 0)
+        self.assertEqual(expiration_alerts[0]['product_name'], "Vence Pronto")
+        self.assertIn("Vence el", expiration_alerts[0]['reason'])
+
+    def test_no_alerts_when_stock_is_ok(self):
+        # Producto con stock suficiente y sin vencimiento próximo
+        expiry_date = timezone.now().date() + timedelta(days=60)
+        Product.objects.create(
+            name="Todo OK",
+            category=self.category,
+            inventory=self.inventory,
+            base_unit=self.unit,
+            expiration_date=expiry_date,
+            stock_min_presentations=10,
+            quantity_per_presentation=1,
+            current_stock=50
+        )
+        
+        alerts = AlertService.get_dynamic_alerts(self.user)
+        
+        # No debe haber alertas para este producto
+        product_alerts = [a for a in alerts if a['product_name'] == "Todo OK"]
+        self.assertEqual(len(product_alerts), 0)

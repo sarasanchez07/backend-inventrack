@@ -1,4 +1,5 @@
 from rest_framework import permissions
+from apps.authentication.models.user import User
 
 class IsAdminUser(permissions.BasePermission):
     """
@@ -8,7 +9,7 @@ class IsAdminUser(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            getattr(request.user, 'role', None) == 'admin'
+            getattr(request.user, 'role', None) == User.Role.ADMIN
         )
 
 class IsStaffUser(permissions.BasePermission):
@@ -19,7 +20,7 @@ class IsStaffUser(permissions.BasePermission):
         return (
             request.user and 
             request.user.is_authenticated and 
-            getattr(request.user, 'role', None) != 'admin'
+            getattr(request.user, 'role', None) != User.Role.ADMIN
         )
 
 class IsAdminOrOwner(permissions.BasePermission):
@@ -28,7 +29,7 @@ class IsAdminOrOwner(permissions.BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         # Admin lo ve todo
-        if getattr(request.user, 'role', None) == 'admin':
+        if getattr(request.user, 'role', None) == User.Role.ADMIN:
             return True
         # El staff solo lo suyo
         return getattr(obj, 'user', None) == request.user
@@ -39,7 +40,7 @@ class IsAdminOrAssignedStaff(permissions.BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         user = request.user
-        if getattr(user, 'role', None) == 'admin':
+        if getattr(user, 'role', None) == User.Role.ADMIN:
             return True
             
         # Dependiendo del objeto, buscamos el inventario

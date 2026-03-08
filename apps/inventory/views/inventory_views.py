@@ -7,6 +7,7 @@ from apps.inventory.models import Inventory
 from apps.inventory.services.inventory_services import InventoryService
 from apps.inventory.serializers import InventorySerializer
 from apps.authentication.permissions import IsAdminUser, IsAdminOrAssignedStaff
+from apps.authentication.models.user import User
 
 
 class InventoryCreateView(APIView):
@@ -26,7 +27,7 @@ class InventoryListView(APIView):
     def get(self, request):
         user = request.user
 
-        if user.role == 'admin':
+        if user.role == User.Role.ADMIN:
             inventories = Inventory.objects.all().order_by('name')
         else:
             inventories = user.assigned_inventories.all().order_by('name')
