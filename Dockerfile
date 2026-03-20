@@ -28,4 +28,4 @@ COPY . .
 EXPOSE 8000
 
 # Comando para correr el servidor
-CMD gunicorn inventrack.wsgi:application --bind 0.0.0.0:$PORT
+CMD ["sh", "-c", "gunicorn inventrack.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
