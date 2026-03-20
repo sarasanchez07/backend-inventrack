@@ -122,44 +122,6 @@ class Movement(models.Model):
         if self.quantity <= 0:
             raise ValidationError("La cantidad debe ser mayor a cero.")
 
-        '''if not self.product:
-            return
-
-        # Convertimos la cantidad a unidad base
-        real_quantity = self.product.convert_to_base_unit(
-            self.quantity,
-            is_presentation=(self.unit_type == "PRESENTATION")
-        )
-
-        # Calculamos stock actual SIN este movimiento si estamos editando
-        movements = Movement.objects.filter(product=self.product)
-
-        if self.pk:
-            movements = movements.exclude(pk=self.pk)
-
-        total_in = Decimal("0")
-        total_out = Decimal("0")
-
-        for movement in movements:
-
-            qty = self.product.convert_to_base_unit(
-                movement.quantity,
-                is_presentation=(movement.unit_type == "PRESENTATION")
-            )
-
-            if movement.type == "IN":
-                total_in += qty
-            else:
-                total_out += qty
-
-        current_stock = total_in - total_out
-
-        # Si es salida validamos
-        if self.type == "OUT":
-            if real_quantity > current_stock:
-                raise ValidationError("Stock insuficiente para realizar esta salida.")'''
-
-
     def __str__(self):
         # Esto es lo que aparecerá en el mensaje de éxito y en las listas
         return f"{self.type} - {self.product_name_at_time} ({self.quantity})"
