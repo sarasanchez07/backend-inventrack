@@ -9,7 +9,7 @@ class PersonnelSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'email', 'role', 'assigned_inventories']
+        fields = ['id', 'first_name', 'email', 'role', 'assigned_inventories', 'is_active']
 
 class PersonnelCreateSerializer(serializers.ModelSerializer):
     assigned_inventories = serializers.ListField(
@@ -21,7 +21,7 @@ class PersonnelCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'email', 'password', 'role', 'assigned_inventories']
+        fields = ['id', 'first_name', 'email', 'password', 'role', 'assigned_inventories', 'is_active']
 
     def validate_email(self, value):
         if self.instance:

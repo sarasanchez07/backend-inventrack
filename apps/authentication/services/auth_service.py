@@ -34,7 +34,16 @@ class AuthService:
         user = authenticate(email=email, password=password)
 
         if not user:
+            # Check if user is disabled
+            inactive_user = User.objects.filter(email=email).first()
+            if inactive_user and not inactive_user.is_active:
+                 if inactive_user.check_password(password):
+                     raise ValueError("Su cuenta ha sido desactivada. Por favor contacte al administrador.")
+
             raise ValueError("Credenciales inválidas")
+
+        if not user.is_active:
+            raise ValueError("Cuenta desactivada")
 
         refresh = RefreshToken.for_user(user)
 
