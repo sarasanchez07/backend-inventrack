@@ -209,6 +209,14 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "20/hour",
+        "user": "200/hour",
+    },
 }
 
 # --------------------------------------------------
@@ -232,7 +240,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Documentación oficial de la API del sistema de gestión de inventarios InvenTrack",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAdminUser"],
     "TAGS_SORTER": "alpha",
     'SCHEMA_PATH_PREFIX': r'/api/v[0-9]|/auth'
 }
