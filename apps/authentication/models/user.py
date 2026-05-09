@@ -59,6 +59,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_system = models.BooleanField(
+        default=False, 
+        help_text="Designa si este es un usuario interno del sistema, usado para procesos automáticos."
+    )
 
     date_joined = models.DateTimeField(default=timezone.now)
 

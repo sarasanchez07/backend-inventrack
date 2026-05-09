@@ -79,6 +79,12 @@ class CategoryDetailView(APIView):
         category = get_object_or_404(Category, pk=pk)
         self.check_object_permissions(request, category)
 
+        if Product.objects.filter(category=category).exists():
+            return Response(
+                {"error": "No se puede eliminar una categoría con productos asociados."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         category.delete()
         return Response(
             {"message": "Categoría eliminada."},

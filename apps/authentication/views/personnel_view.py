@@ -40,6 +40,15 @@ class UserDetailView(APIView):
         inventories = data.pop('assigned_inventories', None)
         password = data.pop('password', None)
         
+        if password:
+            raw_password = password[0] if isinstance(password, list) else password
+            from django.contrib.auth.password_validation import validate_password
+            from django.core.exceptions import ValidationError as DjangoValidationError
+            try:
+                validate_password(raw_password)
+            except DjangoValidationError as e:
+                return Response({"password": list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+        
         serializer = PersonnelCreateSerializer(user_to_edit, data=data, partial=True)
         
         if serializer.is_valid():

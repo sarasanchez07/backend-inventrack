@@ -65,7 +65,8 @@ class AuthService:
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             # En un entorno real, aquí pondrías la URL de tu frontend
-            reset_url = f"http://localhost:3000/reset-password/{uid}/{token}/"
+            FRONTEND_URL = settings.FRONTEND_URL
+            reset_url = f"{FRONTEND_URL}/reset-password/{uid}/{token}/"
             
             send_mail(
                 'Recuperación de Contraseña - InvenTrack',

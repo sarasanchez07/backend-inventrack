@@ -73,13 +73,19 @@ class MovementService:
     
     @staticmethod
     def get_system_user():
-        user, _ = User.objects.get_or_create(
+        user, created = User.objects.get_or_create(
             email="system@inventrak.local",
             defaults={
                 "password": "!",
                 "role": "ADMIN",
+                "is_active": False,
+                "is_system": True,
             }
         )
+        if not created and (user.is_active or not user.is_system):
+            user.is_active = False
+            user.is_system = True
+            user.save(update_fields=["is_active", "is_system"])
         return user
     
     @staticmethod

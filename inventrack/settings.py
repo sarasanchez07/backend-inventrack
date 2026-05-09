@@ -28,18 +28,17 @@ load_dotenv(BASE_DIR / '.env')
 # SEGURIDAD
 # --------------------------------------------------
 
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "django-insecure-inventrack-dev-key"
-)
+SECRET_KEY = os.environ["SECRET_KEY"]
 
-DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,backend-inventrack.onrender.com").split(",")
     if host.strip()
 ]
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 # --------------------------------------------------
 # APLICACIONES
@@ -135,12 +134,18 @@ if "test" in sys.argv or "pytest" in sys.modules:
         }
     }
 else:
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        db_password = os.getenv("DB_PASSWORD")
+        if not db_password:
+            from django.core.exceptions import ImproperlyConfigured
+            raise ImproperlyConfigured("DB_PASSWORD o DATABASE_URL no está configurada en el entorno")
+        
+        db_url = f"postgres://{os.getenv('DB_USER', 'postgres')}:{db_password}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'inventrack_db')}"
+
     DATABASES = {
         "default": dj_database_url.config(
-            default=os.getenv(
-                "DATABASE_URL",
-                f"postgres://{os.getenv('DB_USER', 'postgres')}:{os.getenv('DB_PASSWORD', '')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'inventrack_db')}"
-            ),
+            default=db_url,
             conn_max_age=600,
             conn_health_checks=True,
         )
@@ -172,7 +177,9 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+
+_static_dir = BASE_DIR / "static"
+STATICFILES_DIRS = [_static_dir] if _static_dir.exists() else []
 
 STORAGES = {
     "default": {
@@ -209,9 +216,9 @@ REST_FRAMEWORK = {
 # --------------------------------------------------
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
@@ -234,15 +241,25 @@ SPECTACULAR_SETTINGS = {
 # CORS (Frontend separado)
 # --------------------------------------------------
 
-CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        "CORS_ALLOWED_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173",
-    ).split(",")
-]
+import logging
+logger = logging.getLogger(__name__)
 
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = []
+_raw_origins = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,https://inventrack-fmud.vercel.app",
+).split(",")
+
+for _origin in _raw_origins:
+    _origin = _origin.strip()
+    if not _origin:
+        continue
+    if _origin.startswith("http://") or _origin.startswith("https://"):
+        CORS_ALLOWED_ORIGINS.append(_origin)
+    else:
+        logger.warning(f"CORS origin ignorado por formato inválido: {_origin}. Debe empezar con http:// o https://")
+
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() == "true"
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + ["authorization"]
 

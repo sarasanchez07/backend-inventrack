@@ -1,4 +1,8 @@
+import logging
 from rest_framework.views import APIView
+from rest_framework.exceptions import ValidationError
+
+logger = logging.getLogger(__name__)
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -53,10 +57,16 @@ class MovementCreateView(APIView):
                     status=status.HTTP_201_CREATED
                 )
 
-            except Exception as e:
+            except ValidationError as e:
                 return Response(
                     {"error": str(e)},
                     status=status.HTTP_400_BAD_REQUEST
+                )
+            except Exception as e:
+                logger.error(f"Error inesperado: {e}", exc_info=True)
+                return Response(
+                    {"error": "Error interno del servidor. Contacte al administrador."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -108,10 +118,16 @@ class MovementDetailView(APIView):
                     MovementSerializer(movement).data
                 )
 
-            except Exception as e:
+            except ValidationError as e:
                 return Response(
                     {"error": str(e)},
                     status=status.HTTP_400_BAD_REQUEST
+                )
+            except Exception as e:
+                logger.error(f"Error inesperado: {e}", exc_info=True)
+                return Response(
+                    {"error": "Error interno del servidor. Contacte al administrador."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -146,13 +162,19 @@ class MovementDetailView(APIView):
 
             return Response(
                 {"message": "Movimiento anulado correctamente."},
-                status=200
+                status=status.HTTP_204_NO_CONTENT
             )
 
-        except Exception as e:
+        except ValidationError as e:
             return Response(
                 {"error": str(e)},
-                status=400
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Error inesperado: {e}", exc_info=True)
+            return Response(
+                {"error": "Error interno del servidor. Contacte al administrador."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
 class MovementListView(APIView):

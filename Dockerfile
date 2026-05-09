@@ -27,5 +27,12 @@ COPY . .
 # Exponer puerto
 EXPOSE 8000
 
+# Crear usuario sin privilegios y asignarle permisos de la app
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+RUN chown -R appuser:appgroup /app
+
+# Cambiar a usuario no root
+USER appuser
+
 # Comando para correr el servidor
 CMD ["sh", "-c", "gunicorn inventrack.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]

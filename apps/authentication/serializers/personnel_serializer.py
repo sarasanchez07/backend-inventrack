@@ -31,3 +31,13 @@ class PersonnelCreateSerializer(serializers.ModelSerializer):
             if User.objects.filter(email=value).exists():
                 raise serializers.ValidationError("Este correo ya está registrado.")
         return value
+
+    def validate_password(self, value):
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        try:
+            if value:
+                validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
